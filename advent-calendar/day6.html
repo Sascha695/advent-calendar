@@ -1,156 +1,139 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>6. Dezember – Nikolaus im harten Labyrinth</title>
-<style>
-  :root{
-    --cell: 22px;
-    --gap: 2px;
-    --cols: 10;
-    --wall:#0f172a;
-    --path:#ffffff;     /* besuchte Wege */
-    --path-dim:#cbd5e1; /* graue Wege (im Sichtkegel, unbesucht) */
-    --forest:#166534;   /* Außenwald */
-    --house:#ffd54f;    /* Ziel */
-    --grid-outline:#00000033;
-    --player-scale: 1.2;
-    --goal-scale:   1.05;
-  }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>6. Dezember – Nikolaus im festen Labyrinth</title>
+  <style>
+    :root{
+      --cell: 22px;
+      --gap: 2px;
+      --cols: 10;
+      --wall:#0f172a;
+      --path:#ffffff;
+      --path-dim:#cbd5e1;
+      --forest:#166534;
+      --house:#ffd54f;
+      --grid-outline:#00000033;
+      --player-scale: 1.2;
+      --goal-scale:   1.05;
+    }
+    body{
+      margin:0;height:100%;
+      font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:#e8f3ea; color:#111;
+      background-size:cover; background-position:center; background-attachment:fixed;
+    }
+    .bg-overlay{ position:fixed; inset:0; pointer-events:none; background:linear-gradient(0deg, rgba(0,0,0,.16), rgba(0,0,0,.16)); z-index:-1; }
+    header,footer{padding:10px 8px; text-align:center}
+    h1{margin:0 0 6px; font-size:1.1rem}
+    .sub{opacity:.9; font-size:.95rem}
+    .intro{
+      margin:8px auto 0; max-width:800px; padding:8px 10px;
+      background:#fff; border:1px solid #dbe2ea; border-radius:10px; line-height:1.35;
+    }
+    .wrap{display:grid; place-items:center; padding:8px; gap:8px}
+    .bar{display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap}
+    .bar button{
+      padding:8px 12px; border-radius:10px; border:1px solid #b8c1cc; background:#fff; font:inherit; cursor:pointer;
+    }
+    .frame{
+      padding:6px; border-radius:14px; background:rgba(255,255,255,.65);
+      box-shadow:0 10px 28px rgba(0,0,0,.18), inset 0 0 0 2px var(--grid-outline);
+      max-width:100vw;
+      max-height:calc(100vh - 220px);
+      overflow:auto;
+    }
+    .maze{
+      display:grid;
+      grid-template-columns:repeat(var(--cols), var(--cell));
+      grid-auto-rows:var(--cell);
+      gap:var(--gap);
+      touch-action: pan-y;
+      outline:2px solid var(--grid-outline);
+      outline-offset:4px;
+      background:#fafafaAA; border-radius:10px;
+      isolation:isolate;
+    }
+    .cell{
+      width:var(--cell); height:var(--cell);
+      border-radius:4px; position:relative; display:grid; place-items:center;
+      user-select:none; overflow:visible;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
+    }
+    .wall{   background:var(--wall); }
+    .path{   background:var(--path); }
+    .path.dim{ background:var(--path-dim); }
+    .forest{ background:var(--forest); }
+    .goal{ background:var(--house); }
+    .goal.fallback::after{ content:"🏠"; font-size:calc(var(--cell)*0.75); }
 
-  body{
-    margin:0;height:100%;
-    font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    background:#e8f3ea; color:#111;
-    background-size:cover; background-position:center; background-attachment:fixed;
-  }
-  .bg-overlay{ position:fixed; inset:0; pointer-events:none; background:linear-gradient(0deg, rgba(0,0,0,.16), rgba(0,0,0,.16)); z-index:-1; }
+    .sprite{
+      position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%);
+      width:calc(var(--cell) * var(--player-scale)); height:calc(var(--cell) * var(--player-scale));
+      display:grid; place-items:center; background-repeat:no-repeat; background-size:contain; background-position:center;
+      pointer-events:none; text-shadow:0 1px 2px rgba(0,0,0,.35);
+    }
+    .sprite.emoji{ font-size:calc(var(--cell) * var(--player-scale)*0.9); }
+    .goal-sprite{
+      position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%);
+      width:calc(var(--cell) * var(--goal-scale)); height:calc(var(--cell) * var(--goal-scale));
+      background-repeat:no-repeat; background-size:contain; background-position:center; pointer-events:none;
+    }
 
-  header,footer{padding:10px 8px; text-align:center}
-  h1{margin:0 0 6px; font-size:1.1rem}
-  .sub{opacity:.9; font-size:.95rem}
-  .intro{
-    margin:8px auto 0; max-width:800px; padding:8px 10px;
-    background:#fff; border:1px solid #dbe2ea; border-radius:10px; line-height:1.35;
-  }
+    .fog{
+      position:relative;
+      background:#0b1220 !important;
+      box-shadow:none !important;
+    }
+    .fog::after{ display:none; }
+    .fog > * { display:none !important; }
 
-  .wrap{display:grid; place-items:center; padding:8px; gap:8px}
-  .bar{display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap}
-  .bar button{
-    padding:8px 12px; border-radius:10px; border:1px solid #b8c1cc; background:#fff; font:inherit; cursor:pointer;
-  }
+    .hint{ font-size:.9rem; opacity:.9; margin:2px 0 0; text-align:center; }
 
-  .frame{
-    padding:6px; border-radius:14px; background:rgba(255,255,255,.65);
-    box-shadow:0 10px 28px rgba(0,0,0,.18), inset 0 0 0 2px var(--grid-outline);
-    max-width:100vw;
-    max-height:calc(100vh - 220px);
-    overflow:auto;
-  }
+    .controls{
+      display:grid;
+      grid-template-areas:
+        ". up ."
+        "left center right"
+        ". down .";
+      gap:8px; touch-action:none;
+    }
+    .btn{
+      grid-area:center; width:52px;height:52px;border-radius:12px;border:1px solid #b8c1cc;background:#fff;font-size:20px;
+    }
+    .btn:active{ transform:translateY(1px); }
+    .up{grid-area:up}.down{grid-area:down}.left{grid-area:left}.right{grid-area:right}
 
-  .maze{
-    display:grid;
-    grid-template-columns:repeat(var(--cols), var(--cell));
-    grid-auto-rows:var(--cell);
-    gap:var(--gap);
-    /* Vertikales Seiten-Scrollen erlauben */
-    touch-action: pan-y;
-    outline:2px solid var(--grid-outline);
-    outline-offset:4px;
-    background:#fafafaAA; border-radius:10px;
-    isolation:isolate;
-  }
-
-  .cell{
-    width:var(--cell); height:var(--cell);
-    border-radius:4px; position:relative; display:grid; place-items:center;
-    user-select:none; overflow:visible;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
-  }
-
-  .wall{   background:var(--wall); }
-  .path{   background:var(--path); }            /* besucht */
-  .path.dim{ background:var(--path-dim); }      /* im Sichtkegel, aber unbesucht */
-  .forest{ background:var(--forest); }
-
-  .goal{ background:var(--house); }
-  .goal.fallback::after{ content:"🏠"; font-size:calc(var(--cell)*0.75); }
-
-  /* Spieler- & Ziel-Sprites */
-  .sprite{
-    position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%);
-    width:calc(var(--cell) * var(--player-scale)); height:calc(var(--cell) * var(--player-scale));
-    display:grid; place-items:center; background-repeat:no-repeat; background-size:contain; background-position:center;
-    pointer-events:none; text-shadow:0 1px 2px rgba(0,0,0,.35);
-  }
-  .sprite.emoji{ font-size:calc(var(--cell) * var(--player-scale)*0.9); }
-  .goal-sprite{
-    position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%);
-    width:calc(var(--cell) * var(--goal-scale)); height:calc(var(--cell) * var(--goal-scale));
-    background-repeat:no-repeat; background-size:contain; background-position:center; pointer-events:none;
-  }
-
-  /* Fog of War – ungesehene Zellen komplett verbergen (außer FOREST) */
-  .fog{
-    position:relative;
-    background:#0b1220 !important;
-    box-shadow:none !important;
-  }
-  .fog::after{ display:none; }
-  .fog > * { display:none !important; }
-
-  .hint{
-    font-size:.9rem; opacity:.9; margin:2px 0 0; text-align:center;
-  }
-
-  .controls{
-    display:grid;
-    grid-template-areas:
-      ". up ."
-      "left center right"
-      ". down .";
-    gap:8px; touch-action:none;
-  }
-  .btn{
-    grid-area:center; width:52px;height:52px;border-radius:12px;border:1px solid #b8c1cc;background:#fff;font-size:20px;
-  }
-  .btn:active{ transform:translateY(1px); }
-  .up{grid-area:up}.down{grid-area:down}.left{grid-area:left}.right{grid-area:right}
-
-  @media (max-width:400px){
-    .frame{ max-height: calc(100vh - 200px); }
-    .btn{ width:46px; height:46px; font-size:18px; }
-  }
-</style>
+    @media (max-width:400px){
+      .frame{ max-height: calc(100vh - 200px); }
+      .btn{ width:46px; height:46px; font-size:18px; }
+    }
+  </style>
 </head>
 <body>
 <div class="bg-overlay"></div>
 
 <header>
-  <h1>6. Dezember – Nikolaus im harten Labyrinth</h1>
-  <div class="sub">Langer Umweg ums Haus, viele Sackgassen. Außenwald bleibt sichtbar.</div>
+  <h1>6. Dezember – Nikolaus im festen Labyrinth</h1>
+  <div class="sub">Immer dasselbe Labyrinth, außen bleibt der Wald sichtbar.</div>
   <p class="intro">„Von draußen vom Walde, da komme ich her, aber ich habe leider den Weg zur Eichbühlstraße vergessen. Kannst du mir zeigen, wie ich zu deinem Haus komme?“</p>
 </header>
 
 <main class="wrap">
-  <!-- Obere Leiste: nur Neu erzeugen -->
   <div class="bar">
-    <button id="regen">Neu erzeugen</button>
+    <button id="regen">Neu starten</button>
   </div>
 
-  <!-- Spielfeld -->
   <div class="frame" id="frame">
     <div id="maze" class="maze" aria-label="Labyrinth" role="grid" tabindex="0"></div>
   </div>
 
-  <!-- Hinweis und Taschenlampen-Knopf UNTER dem Spielfeld -->
   <p class="hint">Falls es zu schwer ist, dann ist hier eine Taschenlampe:</p>
   <div class="bar">
     <button id="fogToggle" class="toggle" aria-pressed="false">Sichtfeld AN</button>
   </div>
 
-  <!-- D-Pad -->
   <div class="controls" aria-label="Pfeiltasten">
     <button class="btn up"    aria-label="Nach oben">▲</button>
     <button class="btn left"  aria-label="Nach links">◀</button>
@@ -159,300 +142,128 @@
     <button class="btn down"  aria-label="Nach unten">▼</button>
   </div>
 
-  <div class="win" id="win" style="display:none">Geschafft! Merke dir den Buchstaben: <strong id="letter">N</strong></div>
+  <div class="win" id="win" style="display:none">
+    Geschafft! Merke dir den Buchstaben: <strong id="letter">N</strong>
+  </div>
 </main>
 
 <footer><p><a href="index.html">Zurück zum Kalender</a></p></footer>
 
 <script>
-/* ==== Bilder ==== */
+/* ===== Einstellungen für feste Karte ===== */
+
 const backgroundImageURL = "assets/nikolaus_map.png";
-const playerImageURL     = ""; // z.B. "assets/nikolaus.png"
-const goalImageURL       = ""; // z.B. "assets/gelbes-haus.png"
 if (backgroundImageURL){
   const safeURL = encodeURI(backgroundImageURL);
   document.body.style.backgroundImage = `url('${safeURL}')`;
 }
 
-/* ==== Parameter ==== */
 const FOREST=2, WALL=1, PATH=0;
-const SIZE = 29;          /* handygerecht */
+
+// HIER dein Labyrinth mit 0 (Weg) und 1 (Wand) einfügen 
+   
+const INNER_MAZE = [
+ [1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+ [1,0,0,0,0,0,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1],
+ [1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1],
+ [1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1],
+ [1,0,1,0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,1,1],
+ [1,0,1,0,1,0,0,0,1,0,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1],
+ [1,0,1,0,1,1,1,1,1,0,1,1,0,0,0,0,0,0,1,1,0,1,1,1,1,1,0,1,1],
+ [1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,0,0,0,1,0,1,1],
+ [1,0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1],
+ [1,0,0,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,0,0,0,0,1,0,1,1],
+ [1,1,0,1,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,1,0,1,1,0,1,0,1,1],
+ [1,1,0,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,1,1],
+ [1,1,1,0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,1,1,0,1,1,1,1,1,1,1],
+ [1,1,1,0,1,0,1,1,1,1,1,1,0,0,0,1,1,1,0,1,1,0,0,0,0,0,0,1,1],
+ [1,1,1,0,1,0,0,0,0,1,0,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1,0,1,1],
+ [1,1,1,0,1,0,1,1,0,1,1,1,0,1,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1],
+ [1,1,1,0,1,0,1,0,0,1,0,0,0,1,1,0,1,1,1,1,1,1,1,0,1,1,0,1,1],
+ [1,1,1,1,1,0,0,1,0,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,1,1,0,1,1],
+ [1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,0,1,1],
+ [1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1],
+ [1,1,0,1,1,1,1,0,0,0,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1],
+ [1,1,0,1,1,1,1,0,1,1,1,1,0,1,0,1,1,0,0,0,1,1,0,1,1,1,1,1,1],
+ [1,1,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,0,1,0,0,0,0,1,1,1,1],
+ [1,1,0,1,1,1,0,1,1,1,1,1,0,1,0,0,0,1,1,0,1,1,1,1,0,1,1,1,1],
+ [1,1,0,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,0,0,1,1,1,1,0,0,0,1,1],
+ [1,1,0,0,0,0,0,0,0,0,1,1,0,1,1,0,1,0,1,0,0,0,1,1,0,1,1,1,1],
+ [1,1,0,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1],
+ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+
+];
+// ↑ ERSETZEN durch dein 29x29-Array o.ä. mit 0/1
+
+// Eingang (erste Zelle im Inneren, NICHT der Waldrand)
+const ENTRANCE_INNER = { r: 1, c: 1 };   // anpassen!
+// Ziel (Hausposition) innerhalb von INNER_MAZE
+const GOAL_INNER      = { r: 5, c: 5 };   // anpassen!
+
+/* ===== Variablen ===== */
+
 let GRID = 0;
 let grid, position, goal;
-
-/* Sichtfelder:
-   - lampOn = „Sichtfeld AN“ -> ALLES sichtbar (Fog komplett aus)
-   - lampOn = false          -> Fog aktiv mit Sichtkegel
-*/
-let lampOn = false;       // Button startet AUS (dann Fog aktiv)
+let lampOn = false;
 const FOG_RADIUS = 2;
-
 let visited;
 
-/* DOM */
 const mazeEl   = document.getElementById('maze');
 const frameEl  = document.getElementById('frame');
 const regenBtn = document.getElementById('regen');
 const fogBtn   = document.getElementById('fogToggle');
-
-/* D-Pad Buttons */
 const upBtn    = document.querySelector('.up');
 const downBtn  = document.querySelector('.down');
 const leftBtn  = document.querySelector('.left');
 const rightBtn = document.querySelector('.right');
 
-regenBtn.addEventListener('click', generateAndDraw);
+regenBtn.addEventListener('click', initStaticMaze);
 fogBtn.addEventListener('click', () => {
   lampOn = !lampOn;
-  // UI: Wenn AN -> kompletter Überblick
   fogBtn.textContent = lampOn ? 'Sichtfeld AUS' : 'Sichtfeld AN';
   fogBtn.setAttribute('aria-pressed', String(lampOn));
   draw();
 });
 window.addEventListener('resize', ()=>fitCellSize(true));
 
-/* ==== Init ==== */
-generateAndDraw();
+/* ==== Start: festes Labyrinth aufbauen ==== */
+initStaticMaze();
 
-/* ==== Pipeline ==== */
-function generateAndDraw(){
-  GRID = SIZE + 2; // + äußerer Wald-Ring
+function initStaticMaze(){
+  const N = INNER_MAZE.length;
+  GRID = N + 2; // Waldrand dazu
   document.documentElement.style.setProperty('--cols', String(GRID));
 
-  let carve = buildMazeComplex(SIZE); // 1) Maze
-  const mid = { r: Math.floor(SIZE/2), c: Math.floor(SIZE/2) };
-
-  // 2) Moat um die Mitte mit südlichem Tor -> man muss "rumlaufen"
-  carve = addMoatAroundCenter(carve, mid, 'S');
-
-  // 3) Eingang oben finden (max Distanz zur Mitte)
-  const dist = bfsDistances(carve, mid.r, mid.c);
-  const bestEntranceColInner = argmaxTopEntrance(carve, dist);
-  const entranceInner = { r: 1, c: bestEntranceColInner };
-
-  // 4) Kürzester Weg (durch das Süd-Tor erzwungen)
-  const solutionPath = shortestPath(carve, entranceInner, mid);
-
-  // 5) Viele und lange Sackgassen + Nebenäste
-  const pruned = pruneToSolutionWithDecoys(
-    carve,
-    solutionPath,
-    { decoyChance: 0.33, decoyMaxLen: 8, sideBranchChance: 0.35, sideBranchMaxLen: 4 }
+  grid = Array.from({length:GRID}, (_,R) =>
+    Array.from({length:GRID}, (_,C) => {
+      if (R===0 || C===0 || R===GRID-1 || C===GRID-1) return FOREST;
+      return INNER_MAZE[R-1][C-1] === 1 ? WALL : PATH;
+    })
   );
 
-  // 6) Großes Grid + Start/Ziel
-  const entranceColBig = bestEntranceColInner + 1;
-  ({grid, position, goal} = buildBigGrid(pruned, entranceColBig));
+  // Start/Ziel in das größere Grid (mit Rand) verschieben
+  position = { r: ENTRANCE_INNER.r + 0, c: ENTRANCE_INNER.c + 0 };
+  position.r += 0; position.c += 0;
+  position = { r: ENTRANCE_INNER.r + 0 + 0 + 0 + 1, c: ENTRANCE_INNER.c + 1 };
+  goal     = { r: GOAL_INNER.r + 1, c: GOAL_INNER.c + 1 };
 
-  // 7) Sichtbarkeit initialisieren
   visited = new Set();
   visited.add(`${position.r},${position.c}`);
 
-  // 8) Render
+  document.getElementById('win').style.display='none';
+  lampOn = false;
+
   fitCellSize(true);
   draw();
   attachControls();
 }
 
-/* === Generator (DFS, kurvenlastig) === */
-function buildMazeComplex(n){
-  if (n % 2 === 0) n -= 1;
-  const rows=n, cols=n;
-  const carve = Array.from({length: rows}, () => Array.from({length: cols}, () => WALL));
-  const inBounds = (r,c) => r>0 && c>0 && r<rows-1 && c<cols-1;
-
-  let r = 1, c = Math.floor(cols/2);
-  carve[r][c] = PATH;
-
-  const stack = [[r,c]];
-  const DIRS = [[-2,0],[2,0],[0,-2],[0,2]];
-  let last = -1;
-
-  while (stack.length){
-    const [cr,cc] = stack[stack.length-1];
-    const cand = [];
-    for (let i=0;i<DIRS.length;i++){
-      const [dr,dc]=DIRS[i], nr=cr+dr, nc=cc+dc;
-      if (inBounds(nr,nc) && carve[nr][nc]===WALL) cand.push({i,nr,nc,mr:dr/2,mc:dc/2});
-    }
-    if (cand.length){
-      // Kurven bevorzugen -> längerer Pfad
-      cand.sort((a,b)=>{
-        const aTurn=(a.i===last)?1:0, bTurn=(b.i===last)?1:0;
-        if (aTurn!==bTurn) return aTurn - bTurn;
-        return Math.random()-0.5;
-      });
-      const p=cand[0];
-      carve[cr+p.mr][cc+p.mc]=PATH;
-      carve[p.nr][p.nc]=PATH;
-      stack.push([p.nr,p.nc]); last=p.i;
-    } else { stack.pop(); last=-1; }
-  }
-
-  // zusätzliche Sackgassen im Rohmaze
-  const spurChance = 0.45;
-  for (let rr=1; rr<rows-1; rr++){
-    for (let cc=1; cc<cols-1; cc++){
-      if (carve[rr][cc]!==PATH || Math.random()>=spurChance) continue;
-      const dirs = [[-2,0],[2,0],[0,-2],[0,2]].sort(()=>Math.random()-0.5);
-      for (const [dr,dc] of dirs){
-        const a1=rr+dr/2, b1=cc+dc/2;
-        const a2=rr+dr,   b2=cc+dc;
-        if (!(a1>0&&b1>0&&a1<rows-1&&b1<cols-1)) continue;
-        if (!(a2>0&&b2>0&&a2<rows-1&&b2<cols-1)) continue;
-        if (carve[a1][b1]===WALL && carve[a2][b2]===WALL){
-          carve[a1][b1]=PATH;
-          if (Math.random()<0.9){ carve[a2][b2]=PATH;
-            const a3=a2+dr/2, b3=b2+dc/2;
-            if (Math.random()<0.4 && a3>0&&b3>0&&a3<rows-1&&b3<cols-1 && carve[a3][b3]===WALL){ carve[a3][b3]=PATH; }
-          }
-          break;
-        }
-      }
-    }
-  }
-  return carve;
-}
-
-/* Moat (Wallgraben) um die Mitte mit Tor in gateDir ('N','S','E','W') */
-function addMoatAroundCenter(carve, center, gateDir='S'){
-  const R=carve.length, C=carve[0].length;
-  const inB=(r,c)=> r>=0 && c>=0 && r<R && c<C;
-  const ring = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-  for (const [dr,dc] of ring){
-    const rr=center.r+dr, cc=center.c+dc;
-    if (inB(rr,cc)) carve[rr][cc]=WALL;
-  }
-  const gates = {N:[-1,0],S:[1,0],E:[0,1],W:[0,-1]};
-  const [gr, gc] = [center.r + gates[gateDir][0], center.c + gates[gateDir][1]];
-  if (inB(gr,gc)) carve[gr][gc]=PATH;
-  if (inB(center.r, center.c)) carve[center.r][center.c]=PATH;
-  return carve;
-}
-
-/* ==== BFS-Distanzen, kürzester Pfad ==== */
-function bfsDistances(carve, sr, sc){
-  const R=carve.length, C=carve[0].length;
-  const dist=Array.from({length:R},()=>Array(C).fill(Infinity));
-  const q=[]; if (carve[sr][sc]===PATH){ dist[sr][sc]=0; q.push([sr,sc]); }
-  const steps=[[1,0],[-1,0],[0,1],[0,-1]];
-  while(q.length){
-    const [r,c]=q.shift();
-    for(const [dr,dc] of steps){
-      const nr=r+dr, nc=c+dc;
-      if(nr<0||nc<0||nr>=R||nc>=C) continue;
-      if (carve[nr][nc]!==PATH) continue;
-      if (dist[nr][nc] > dist[r][c]+1){ dist[nr][nc]=dist[r][c]+1; q.push([nr,nc]); }
-    }
-  }
-  return dist;
-}
-
-function shortestPath(carve, start, goal){
-  const R=carve.length, C=carve[0].length;
-  const dist=bfsDistances(carve, start.r, start.c);
-  if (!Number.isFinite(dist[goal.r][goal.c])) return new Set();
-  const steps=[[1,0],[-1,0],[0,1],[0,-1]];
-  const path=new Set();
-  let r=goal.r, c=goal.c;
-  path.add(`${r},${c}`);
-  while (r!==start.r || c!==start.c){
-    for (const [dr,dc] of steps){
-      const nr=r+dr, nc=c+dc;
-      if(nr<0||nc<0||nr>=R||nc>=C) continue;
-      if (dist[nr][nc] === dist[r][c]-1){
-        r=nr; c=nc; path.add(`${r},${c}`); break;
-      }
-    }
-  }
-  return path;
-}
-
-/* Prune: Lösungspfad + viele/längere Decoys + Nebenäste */
-function pruneToSolutionWithDecoys(
-  carve,
-  pathSet,
-  {decoyChance=0.33, decoyMaxLen=8, sideBranchChance=0.35, sideBranchMaxLen=4}={}
-){
-  const R=carve.length, C=carve[0].length;
-  const isPath = (r,c)=> pathSet.has(`${r},${c}`);
-
-  // 1) Alles außer Lösungspfad -> Wand
-  for (let r=0;r<R;r++){
-    for (let c=0;c<C;c++){
-      if (carve[r][c]===PATH && !isPath(r,c)) carve[r][c]=WALL;
-    }
-  }
-
-  // 2) Entlang des Lösungspfads Sackgassen wachsen lassen
-  const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
-  function growLine(sr,sc,dr,dc,maxLen){
-    let pr=sr, pc=sc, len = 1 + Math.floor(Math.random()*maxLen);
-    while (len>0 && pr>0 && pc>0 && pr<R-1 && pc<C-1 && carve[pr][pc]===WALL){
-      carve[pr][pc]=PATH;
-      // Nebenast abzweigen
-      if (sideBranchChance>0 && Math.random()<sideBranchChance){
-        const ortho = (dr===0) ? [[1,0],[-1,0]] : [[0,1],[0,-1]];
-        const [sdr,sdc] = ortho[Math.random()<0.5?0:1];
-        const sr2=pr+sdr, sc2=pc+sdc;
-        if (sr2>0 && sc2>0 && sr2<R-1 && sc2<C-1 && carve[sr2][sc2]===WALL){
-          growLine(sr2, sc2, sdr, sdc, sideBranchMaxLen);
-        }
-      }
-      pr+=dr; pc+=dc; len--;
-    }
-  }
-
-  for (let r=1;r<R-1;r++){
-    for (let c=1;c<C-1;c++){
-      if (!isPath(r,c) || Math.random()>=decoyChance) continue;
-      const shuffled = DIRS.slice().sort(()=>Math.random()-0.5);
-      for (const [dr,dc] of shuffled){
-        const nr=r+dr, nc=c+dc;
-        if (nr<=0||nc<=0||nr>=R-1||nc>=C-1 || carve[nr][nc]!==WALL) continue;
-        growLine(nr,nc,dr,dc,decoyMaxLen);
-        break;
-      }
-    }
-  }
-  return carve;
-}
-
-/* Beste obere Öffnung (größte Distanz zur Mitte) */
-function argmaxTopEntrance(carve, dist){
-  const C=carve[0].length;
-  let bestC= Math.floor(C/2), bestD=-1;
-  for(let c=1;c<C-1;c++){
-    if (carve[1][c]===PATH){
-      const d = dist[1][c];
-      if (Number.isFinite(d) && d>bestD){ bestD=d; bestC=c; }
-    }
-  }
-  return bestC;
-}
-
-/* Big grid mit Wald-Ring + Eingang + Start/Ziel */
-function buildBigGrid(carve, entranceColBig){
-  const n=carve.length;
-  const big = Array.from({length:n+2},(_,R)=>
-    Array.from({length:n+2},(_,C)=>{
-      if (R===0||C===0||R===n+1||C===n+1) return FOREST;
-      return carve[R-1][C-1]===WALL ? WALL : PATH;
-    })
-  );
-  big[1][entranceColBig]=PATH;
-
-  const start = { r: 0, c: entranceColBig };
-  const g     = { r: Math.floor((n+2)/2), c: Math.floor((n+2)/2) };
-  return { grid: big, position:start, goal:g };
-}
-
-/* ==== Sizing ==== */
+/* ===== Größe der Zellen anpassen ===== */
 function fitCellSize(onlySize){
-  const headerH = document.querySelector('header')?.offsetHeight || 0;
-  const barH    = document.querySelector('.bar')?.offsetHeight    || 0;
+  const headerH   = document.querySelector('header')?.offsetHeight || 0;
+  const barH      = document.querySelector('.bar')?.offsetHeight    || 0;
   const controlsH = document.querySelector('.controls')?.offsetHeight || 0;
-  const winH    = document.getElementById('win')?.offsetHeight    || 0;
+  const winH      = document.getElementById('win')?.offsetHeight    || 0;
 
   const vw = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
   const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
@@ -460,7 +271,7 @@ function fitCellSize(onlySize){
   const availW = Math.max(200, vw - 20);
   const availH = Math.max(200, vh - (headerH + barH + controlsH + winH + 20));
 
-  const cols = GRID || parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols')) || 1;
+  const cols = GRID || 1;
   const cellByW = Math.floor(availW / cols) - 1;
   const cellByH = Math.floor(availH / cols) - 1;
 
@@ -474,74 +285,16 @@ function fitCellSize(onlySize){
   if (!onlySize && GRID){ draw(); }
 }
 
-/* ==== Render ==== */
-function draw(){
-  const { seenEver, fringeNow } = computeVisibilityStates();
-  mazeEl.innerHTML = '';
-  for (let r=0; r<GRID; r++){
-    for (let c=0; c<GRID; c++){
-      const cell = document.createElement('div');
-      const v = grid[r][c];
-
-      // Grundtyp
-      if (r===goal.r && c===goal.c){
-        cell.className = 'cell goal';
-        if (goalImageURL){
-          const s = document.createElement('div');
-          s.className = 'goal-sprite';
-          s.style.backgroundImage = `url('${goalImageURL}')`;
-          cell.appendChild(s);
-        } else {
-          cell.classList.add('fallback');
-        }
-      } else if (v===WALL) {
-        cell.className = 'cell wall';
-      } else if (v===FOREST) {
-        cell.className = 'cell forest';
-      } else {
-        cell.className = 'cell path';
-      }
-
-      // Spieler
-      if (r===position.r && c===position.c){
-        const s = document.createElement('div');
-        if (playerImageURL){ s.className = 'sprite'; s.style.backgroundImage = `url('${playerImageURL}')`; }
-        else { s.className = 'sprite emoji'; s.textContent = '🎅'; }
-        s.setAttribute('aria-hidden','true');
-        cell.classList.add('player'); cell.tabIndex = 0; cell.appendChild(s);
-      }
-
-      // Fog-Logik:
-      // - lampOn (Sichtfeld AN) => ALLES sichtbar, keine Dim-/Fog-Klassen
-      // - lampOff (Sichtfeld AUS) => Fog aktiv mit grauem Sichtkegel
-      if (!lampOn){
-        if (!seenEver[r][c]) {
-          if (v !== FOREST) cell.classList.add('fog'); // Forest NIE verdunkeln
-        } else if (fringeNow[r][c]) {
-          if (v===PATH || (r===goal.r && c===goal.c)){
-            cell.classList.add('dim');
-          }
-        }
-      }
-
-      mazeEl.appendChild(cell);
-    }
-  }
-  focusPlayer();
-}
-
-/* Sichtzustände */
+/* ===== Sicht / Nebel ===== */
 function computeVisibilityStates(){
-  const seenEver = Array.from({length:GRID},()=>Array(GRID).fill(false));
-  const fringeNow = Array.from({length:GRID},()=>Array(GRID).fill(false));
+  const seenEver   = Array.from({length:GRID},()=>Array(GRID).fill(false));
+  const fringeNow  = Array.from({length:GRID},()=>Array(GRID).fill(false));
 
-  // lampOn: alles sichtbar
   if (lampOn){
     for (let r=0;r<GRID;r++) for (let c=0;c<GRID;c++) seenEver[r][c]=true;
     return { seenEver, fringeNow };
   }
 
-  // bereits besuchte Felder sind "gesehen"
   if (visited){
     for (const key of visited){
       const [r,c] = key.split(',').map(Number);
@@ -549,7 +302,6 @@ function computeVisibilityStates(){
     }
   }
 
-  // Sichtkegel
   const R = position.r, C = position.c;
   for (let r=R-FOG_RADIUS; r<=R+FOG_RADIUS; r++){
     for (let c=C-FOG_RADIUS; c<=C+FOG_RADIUS; c++){
@@ -564,13 +316,62 @@ function computeVisibilityStates(){
   return { seenEver, fringeNow };
 }
 
+/* ===== Zeichnen ===== */
+function draw(){
+  const { seenEver, fringeNow } = computeVisibilityStates();
+  mazeEl.innerHTML = '';
+
+  for (let r=0; r<GRID; r++){
+    for (let c=0; c<GRID; c++){
+      const cell = document.createElement('div');
+      const v = grid[r][c];
+
+      if (r===goal.r && c===goal.c){
+        cell.className = 'cell goal fallback';
+      } else if (v===WALL){
+        cell.className = 'cell wall';
+      } else if (v===FOREST){
+        cell.className = 'cell forest';
+      } else {
+        cell.className = 'cell path';
+      }
+
+      if (r===position.r && c===position.c){
+        const s = document.createElement('div');
+        s.className = 'sprite emoji';
+        s.textContent = '🎅';
+        s.setAttribute('aria-hidden','true');
+        cell.classList.add('player');
+        cell.tabIndex = 0;
+        cell.appendChild(s);
+      }
+
+      if (!lampOn){
+        if (!seenEver[r][c]) {
+          if (v !== FOREST) cell.classList.add('fog');
+        } else if (fringeNow[r][c]) {
+          if (v===PATH || (r===goal.r && c===goal.c)){
+            cell.classList.add('dim');
+          }
+        }
+      }
+
+      mazeEl.appendChild(cell);
+    }
+  }
+  focusPlayer();
+}
+
 function focusPlayer(){
   const p = mazeEl.querySelector('.player');
   if (p) p.focus({preventScroll:true});
 }
 
-/* Bewegung & Win */
-function canMove(r,c){ return !(r<0||c<0||r>=GRID||c>=GRID) && grid[r][c]!==WALL; }
+/* ===== Bewegung & Gewinn ===== */
+function canMove(r,c){
+  return !(r<0||c<0||r>=GRID||c>=GRID) && grid[r][c]!==WALL;
+}
+
 function move(dr,dc){
   const nr=position.r+dr, nc=position.c+dc;
   if(!canMove(nr,nc)) return;
@@ -593,14 +394,14 @@ function keyHandler(e){
   else if(['arrowright','d'].includes(k)) move(0,1);
 }
 
-/* Touch – vertikales Scrollen zulassen; horizontale Wischgeste bewegt die Figur */
+/* Touch – horizontale Wischgeste bewegt die Figur */
 let sx=0, sy=0, st=0;
 const SWIPE_MIN=22, SWIPE_MAXT=600;
 function onTouchStart(e){
   if (!e.touches || e.touches.length!==1) return;
   sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now();
 }
-function onTouchMove(e){ /* kein preventDefault -> pan-y erlaubt */ }
+function onTouchMove(e){}
 function onTouchEnd(e){
   const dt=Date.now()-st; if(dt>SWIPE_MAXT) return;
   const t=e.changedTouches && e.changedTouches[0]; if(!t) return;
@@ -608,10 +409,11 @@ function onTouchEnd(e){
   if (Math.max(Math.abs(dx),Math.abs(dy))<SWIPE_MIN) return;
   if (Math.abs(dx)>Math.abs(dy)){
     if (dx>0) move(0, 1); else move(0, -1);
-    e.preventDefault(); // nur horizontales Wischen blockt Scrollen
+    e.preventDefault();
   }
 }
 
+/* Buttons & Events */
 function attachControls(){
   detachControls();
   document.addEventListener('keydown', keyHandler);
@@ -632,13 +434,6 @@ function detachControls(){
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
 
 
 
