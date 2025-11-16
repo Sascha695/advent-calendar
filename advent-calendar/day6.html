@@ -59,8 +59,13 @@
       background:rgba(255,255,255,.65);
       box-shadow:0 10px 28px rgba(0,0,0,.18), inset 0 0 0 2px var(--grid-outline);
       max-width:100vw;
-      /* kein eigener Scrollcontainer mehr */
       overflow:visible;
+
+      /* NEU: Maze + Hinweis + Button untereinander */
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
     }
     .maze{
       display:grid;
@@ -107,11 +112,11 @@
     .fog::after{ display:none; }
     .fog > * { display:none !important; }
 
-    /* Hinweis weiter nach unten */
+    /* Hinweis unter dem Labyrinth */
     .hint{
       font-size:.9rem;
       opacity:.9;
-      margin:18px 0 0;
+      margin:8px 0 0;
       text-align:center;
     }
 
@@ -150,11 +155,12 @@
 
   <div class="frame" id="frame">
     <div id="maze" class="maze" aria-label="Labyrinth" role="grid" tabindex="0"></div>
-  </div>
 
-  <p class="hint">Falls es zu schwer ist, dann ist hier eine Taschenlampe:</p>
-  <div class="bar">
-    <button id="fogToggle" class="toggle" aria-pressed="false">Sichtfeld AN</button>
+    <!-- Hinweis + Taschenlampe jetzt im selben Frame -->
+    <p class="hint">Falls es zu schwer ist, dann ist hier eine Taschenlampe:</p>
+    <div class="bar">
+      <button id="fogToggle" class="toggle" aria-pressed="false">Sichtfeld AN</button>
+    </div>
   </div>
 
   <div class="controls" aria-label="Pfeiltasten">
@@ -175,7 +181,7 @@
 <script>
 /* ===== Einstellungen für feste Karte ===== */
 
-const backgroundImageURL = "assets/nikolaus_map2.png";
+const backgroundImageURL = "assets/nikolaus_map.png";
 if (backgroundImageURL){
   const safeURL = encodeURI(backgroundImageURL);
   const bg = document.querySelector('.bg-overlay');
@@ -459,8 +465,6 @@ function detachControls(){
 </script>
 </body>
 </html>
-
-
 
 
 
