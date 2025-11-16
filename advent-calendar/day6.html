@@ -144,9 +144,6 @@
 </header>
 
 <main class="wrap">
-  <div class="bar">
-    <button id="regen">Neu starten</button>
-  </div>
 
   <div class="frame" id="frame">
     <div id="maze" class="maze" aria-label="Labyrinth" role="grid" tabindex="0"></div>
@@ -237,14 +234,12 @@ let visited;
 
 const mazeEl   = document.getElementById('maze');
 const frameEl  = document.getElementById('frame');
-const regenBtn = document.getElementById('regen');
 const fogBtn   = document.getElementById('fogToggle');
 const upBtn    = document.querySelector('.up');
 const downBtn  = document.querySelector('.down');
 const leftBtn  = document.querySelector('.left');
 const rightBtn = document.querySelector('.right');
 
-regenBtn.addEventListener('click', initStaticMaze);
 fogBtn.addEventListener('click', () => {
   lampOn = !lampOn;
   fogBtn.textContent = lampOn ? 'Sichtfeld AUS' : 'Sichtfeld AN';
