@@ -48,8 +48,8 @@
       margin:8px auto 0; max-width:800px; padding:8px 10px;
       background:#fff; border:1px solid #dbe2ea; border-radius:10px; line-height:1.35;
     }
-    .wrap{display:grid; place-items:center; padding:8px; gap:25px}
-    .bar{display:flex; gap:16px; align-items:center; justify-content:center; flex-wrap:wrap}
+    .wrap{display:grid; place-items:center; padding:8px; gap:8px}
+    .bar{display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap}
     .bar button{
       padding:8px 12px; border-radius:10px; border:1px solid #b8c1cc; background:#fff; font:inherit; cursor:pointer;
     }
@@ -59,13 +59,8 @@
       background:rgba(255,255,255,.65);
       box-shadow:0 10px 28px rgba(0,0,0,.18), inset 0 0 0 2px var(--grid-outline);
       max-width:100vw;
+      /* kein eigener Scrollcontainer mehr */
       overflow:visible;
-
-      /* NEU: Maze + Hinweis + Button untereinander */
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:8px;
     }
     .maze{
       display:grid;
@@ -112,11 +107,11 @@
     .fog::after{ display:none; }
     .fog > * { display:none !important; }
 
-    /* Hinweis unter dem Labyrinth */
+    /* Hinweis weiter nach unten */
     .hint{
       font-size:.9rem;
       opacity:.9;
-      margin:8px 0 0;
+      margin:18px 0 0;
       text-align:center;
     }
 
@@ -149,16 +144,17 @@
 </header>
 
 <main class="wrap">
-  
+  <div class="bar">
+    <button id="regen">Neu starten</button>
+  </div>
 
   <div class="frame" id="frame">
     <div id="maze" class="maze" aria-label="Labyrinth" role="grid" tabindex="0"></div>
+  </div>
 
-    <!-- Hinweis + Taschenlampe jetzt im selben Frame -->
-    <p class="hint">Falls es zu schwer ist, dann ist hier eine Taschenlampe:</p>
-    <div class="bar">
-      <button id="fogToggle" class="toggle" aria-pressed="false">Sichtfeld AN</button>
-    </div>
+  <p class="hint">Falls es zu schwer ist, dann ist hier eine Taschenlampe:</p>
+  <div class="bar">
+    <button id="fogToggle" class="toggle" aria-pressed="false">Sichtfeld AN</button>
   </div>
 
   <div class="controls" aria-label="Pfeiltasten">
@@ -463,6 +459,7 @@ function detachControls(){
 </script>
 </body>
 </html>
+
 
 
 
