@@ -48,7 +48,7 @@
       margin:8px auto 0; max-width:800px; padding:8px 10px;
       background:#fff; border:1px solid #dbe2ea; border-radius:10px; line-height:1.35;
     }
-    .wrap{display:grid; place-items:center; padding:8px; gap:16px}
+    .wrap{display:grid; place-items:center; padding:8px; gap:100px}
     .bar{display:flex; gap:16px; align-items:center; justify-content:center; flex-wrap:wrap}
     .bar button{
       padding:8px 12px; border-radius:10px; border:1px solid #b8c1cc; background:#fff; font:inherit; cursor:pointer;
@@ -232,7 +232,7 @@ const GOAL_INNER      = { r: 13, c: 13 };
 let GRID = 0;
 let grid, position, goal;
 let lampOn = false;
-const FOG_RADIUS = 2;
+const FOG_RADIUS = 1;
 let visited;
 
 const mazeEl   = document.getElementById('maze');
