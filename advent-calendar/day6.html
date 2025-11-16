@@ -545,7 +545,7 @@ let partyTimeout;
 
 function showParty(){
   const letter = document.getElementById('letter')?.textContent || 'i';
-  partyMsg.innerHTML = `🎉 Geschafft! Der Nikolaus hat dein Haus gefunden. Merke dir den Buchstaben: {letter} 🎉`;
+  partyMsg.innerHTML = `🎉 Geschafft! Der Nikolaus hat dein Haus gefunden. Merke dir den Buchstaben: i 🎉`;
   partyEl.classList.add('show');
   spawnConfetti(140);
   clearTimeout(partyTimeout);
