@@ -191,6 +191,8 @@
 </div>
 
 <script>
+  document.addEventListener('DOMContentLoaded', function () {
+  /* dein kompletter JS-Code HIER hinein */
 /* ==== Bilder ==== */
 const backgroundImageURL = "assets/nikolaus_map.png";
 const playerImageURL     = ""; // optional
@@ -575,6 +577,9 @@ function attachControls(){
   leftBtn.onclick  = function(){ move( 0,-1); };
   rightBtn.onclick = function(){ move( 0, 1); };
 }
+    generateAndDraw();
+  attachControls();
+});
 </script>
 </body>
 </html>
