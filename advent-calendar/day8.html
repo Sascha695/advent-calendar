@@ -6,15 +6,15 @@
   <title>Adventskalender – Weihnachts-Mathe-Rätsel</title>
 
   <style>
-    /* ===================== FESTES HINTERGRUNDBILD ===================== */
-    .background-fixed {
+    /* ===================== FESTES HINTERGRUNDBILD (Ebene 1) ===================== */
+    .bg-layer {
       position: fixed;
       inset: 0;
       background: url("assets/teaching_santa.png") center center / cover no-repeat;
-      z-index: -2;
+      z-index: -2;          /* ganz hinten */
     }
 
-    /* ===================== FALLING COLORED NUMBERS ===================== */
+    /* ===================== FALLING COLORED NUMBERS (Ebene 2) ===================== */
     .numbers-layer {
       position: fixed;
       inset: 0;
@@ -38,14 +38,16 @@
       100% { transform: translateY(110vh) rotate(360deg); opacity: 0.6; }
     }
 
-    /* ===================== SEITENLAYOUT ===================== */
+    /* ===================== SEITENLAYOUT (Ebene 3 – Inhalt) ===================== */
+    html, body { height: 100%; }
+
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
       color: #1f2937;
       overflow-x: hidden;
+      background: transparent;  /* kein weiteres Hintergrundbild hier */
       position: relative;
-      z-index: 0;
     }
 
     header {
@@ -55,12 +57,16 @@
       padding: 1.25rem 1rem .25rem;
       font-size: 1.8rem;
       font-weight: 700;
+      position: relative;
+      z-index: 0;
     }
 
     .page {
       max-width: 1100px;
       margin: 2rem auto;
       padding: 1.25rem;
+      position: relative;
+      z-index: 0;
     }
 
     .card {
@@ -137,6 +143,11 @@
       font-weight:800;
     }
 
+    .puzzle-header p{
+      margin:.1rem 0;
+      color:#4b5563;
+    }
+
     .puzzle {
       max-width:480px;
       margin:0 auto;
@@ -186,17 +197,22 @@
       border-radius:8px;
       border:1px solid #cbd5e1;
     }
+
+    .final input:focus{
+      outline:2px solid #22c55e;
+      outline-offset:1px;
+    }
   </style>
 </head>
 
 <body>
+  <!-- Ebene 1: festes Hintergrundbild -->
+  <div class="bg-layer"></div>
 
-  <!-- FESTES HINTERGRUNDBILD -->
-  <div class="background-fixed"></div>
-
-  <!-- FALLENDE ZAHLEN -->
+  <!-- Ebene 2: fallende Zahlen -->
   <div class="numbers-layer" id="numbersLayer"></div>
 
+  <!-- Ebene 3: Inhalt (scrollt) -->
   <header>Tag 1 – Weihnachts-Mathe-Rätsel</header>
 
   <div class="page">
@@ -244,7 +260,7 @@
             <span>+</span>
             <div class="symbol gift">🎁</div>
             <span>=</span>
-            <input id="answer" type="number">
+            <input id="answer" type="number" inputmode="numeric">
           </div>
 
         </div>
@@ -260,13 +276,14 @@
       <div class="letter-box" id="letterBox" style="display:none;">
         <p>Dein Buchstabe:</p>
         <div class="letter">O</div>
+        <p>Merke dir diesen Buchstaben!</p>
       </div>
 
     </div>
   </div>
 
   <script>
-    /* ===================== Mathe-Logik ===================== */
+    /* ===== Mathe-Logik ===== */
     const CORRECT_ANSWER = 18;
     const answerInput = document.getElementById("answer");
     const msg = document.getElementById("msg");
@@ -274,11 +291,12 @@
 
     document.getElementById("checkBtn").addEventListener("click", () => {
       const val = Number(answerInput.value.trim());
-      msg.classList.remove("ok", "err");
+      msg.classList.remove("ok","err");
 
       if (!answerInput.value.trim()) {
         msg.textContent = "Bitte gib eine Zahl ein.";
         msg.classList.add("err");
+        letterBox.style.display = "none";
         return;
       }
 
@@ -296,11 +314,12 @@
     document.getElementById("clearBtn").addEventListener("click", () => {
       answerInput.value = "";
       msg.textContent = "";
-      msg.classList.remove("ok", "err");
+      msg.classList.remove("ok","err");
       letterBox.style.display = "none";
+      answerInput.focus();
     });
 
-    /* ===================== Fallende bunte Zahlen ===================== */
+    /* ===== Bunte fallende Zahlen ===== */
     const layer = document.getElementById("numbersLayer");
     const COLORS = ["#ef4444","#22c55e","#facc15","#3b82f6","#ffffff"];
 
@@ -314,15 +333,15 @@
       elem.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
       elem.style.opacity = 0.6 + Math.random()*0.4;
       layer.appendChild(elem);
-      setTimeout(()=>elem.remove(),14000);
+      setTimeout(() => elem.remove(), 14000);
     }
 
-    for (let i=0;i<40;i++) setTimeout(createNumber, i*150);
+    for (let i = 0; i < 40; i++) {
+      setTimeout(createNumber, i*150);
+    }
     setInterval(createNumber, 700);
   </script>
-
 </body>
 </html>
-
 
 
