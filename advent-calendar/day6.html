@@ -6,10 +6,20 @@
 <title>6. Dezember – Nikolaus im harten Labyrinth</title>
 <style>
   :root{
-    --cell: 22px; --gap: 2px; --cols: 10;
-    --wall:#0f172a; --path:#ffffff; --path-dim:#cbd5e1;
-    --forest:#166534; --house:#ffd54f; --grid-outline:#00000033;
-    --player-scale: 1.2; --goal-scale: 1.05;
+    /* 31 Spalten = 29 Level + 2 Waldrand */
+    --cols: 31;
+    /* Zelle so, dass sie auf Handybreite passt (max 22px) */
+    --cell: min(22px, calc((100vw - 24px) / 31));
+    --gap: 2px;
+
+    --wall:#0f172a;
+    --path:#ffffff;
+    --path-dim:#cbd5e1;
+    --forest:#166534;
+    --house:#ffd54f;
+    --grid-outline:#00000033;
+    --player-scale: 1.2;
+    --goal-scale: 1.05;
   }
 
   /* Fixierter Hintergrund als eigene Ebene */
@@ -18,7 +28,7 @@
     inset:0;
     z-index:0;
     background-repeat:no-repeat;
-    background-size:cover;          /* füllt die ganze Fläche */
+    background-size:cover;
     background-position:center;
     background-attachment:fixed;
   }
@@ -37,21 +47,18 @@
     height:100%;
   }
 
-  /* Body scrollt nicht, nur .page */
   body{
-    min-height:100vh;
     font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     color:#111;
     background:none;
-    overflow:hidden;
+    overflow:hidden;        /* Body scrollt nicht */
   }
 
-  /* Scrollbarer Inhalt */
   .page{
     position:relative;
     height:100vh;
-    overflow-y:auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y:auto;        /* nur dieser Container scrollt */
+    -webkit-overflow-scrolling:touch;
   }
 
   header,main,footer{ position:relative; z-index:1; }
@@ -74,19 +81,37 @@
   .bar button{padding:8px 12px; border-radius:10px; border:1px solid #b8c1cc; background:#fff; font:inherit; cursor:pointer;}
 
   .frame{
-    padding:6px; border-radius:14px; background:rgba(255,255,255,.65);
+    padding:6px;
+    border-radius:14px;
+    background:rgba(255,255,255,.65);
     box-shadow:0 10px 28px rgba(0,0,0,.18), inset 0 0 0 2px var(--grid-outline);
-    max-width:100vw; overflow:visible;
+    max-width:100vw;
+    overflow:visible;
   }
+
   .maze{
-    display:grid; grid-template-columns:repeat(var(--cols), var(--cell)); grid-auto-rows:var(--cell);
-    gap:var(--gap); touch-action: pan-y; outline:2px solid var(--grid-outline); outline-offset:4px;
-    background:#fafafaAA; border-radius:10px; isolation:isolate;
+    display:grid;
+    grid-template-columns:repeat(var(--cols), var(--cell));
+    grid-auto-rows:var(--cell);
+    gap:var(--gap);
+    touch-action: pan-y;
+    outline:2px solid var(--grid-outline);
+    outline-offset:4px;
+    background:#fafafaAA;
+    border-radius:10px;
+    isolation:isolate;
   }
 
   .cell{
-    width:var(--cell); height:var(--cell); border-radius:4px; position:relative; display:grid; place-items:center;
-    user-select:none; overflow:visible; box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
+    width:var(--cell);
+    height:var(--cell);
+    border-radius:4px;
+    position:relative;
+    display:grid;
+    place-items:center;
+    user-select:none;
+    overflow:visible;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
   }
   .wall{background:var(--wall)}
   .path{background:var(--path)}
@@ -97,19 +122,20 @@
   .goal.dim{filter:brightness(.85)}
 
   .sprite{
-    position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%);
-    width:calc(var(--cell)*var(--player-scale)); height:calc(var(--cell)*var(--player-scale));
-    display:grid; place-items:center; background-repeat:no-repeat; background-size:contain; background-position:center; pointer-events:none; text-shadow:0 1px 2px rgba(0,0,0,.35);
+    position:absolute;
+    inset:50% auto auto 50%;
+    transform:translate(-50%,-50%);
+    width:calc(var(--cell)*var(--player-scale));
+    height:calc(var(--cell)*var(--player-scale));
+    display:grid;
+    place-items:center;
+    background-repeat:no-repeat;
+    background-size:contain;
+    background-position:center;
+    pointer-events:none;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
   }
   .sprite.emoji{ font-size:calc(var(--cell)*var(--player-scale)*0.9); }
-  .goal-sprite{
-    position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%);
-    width:calc(var(--cell)*var(--goal-scale)); height:calc(var(--cell)*var(--goal-scale)); background-repeat:no-repeat; background-size:contain; background-position:center; pointer-events:none;
-  }
-
-  .fog{ background:#0b1220 !important; box-shadow:none !important; }
-  .fog::after{display:none}
-  .fog>*{display:none !important}
 
   .hint{ font-size:.9rem; opacity:.9; margin:2px 0 0; text-align:center; }
   .controls{ display:grid; grid-template-areas: ". up ." "left center right" ". down ."; gap:8px; touch-action:none; }
@@ -120,36 +146,13 @@
     .btn{ width:46px; height:46px; font-size:18px; }
   }
 
-  /* Party-Overlay */
-  .party{
-    position:fixed; inset:0; display:none; place-items:center;
-    pointer-events:none; z-index:999;
-  }
-  .party.show{ display:grid; }
-  .party .message{
-    background:rgba(255,255,255,.95);
-    border:1px solid #e6e6e6;
-    border-radius:16px;
-    padding:14px 20px;
-    font-weight:700;
-    font-size:1.15rem;
-    box-shadow:0 10px 26px rgba(0,0,0,.18);
-    transform:translateY(-30px);
-    animation: fly-in .6s ease-out forwards, pop 1.6s ease-in-out 0.6s 2;
-    text-align:center;
-  }
-  @keyframes fly-in{ to{ transform:translateY(0); opacity:1; } from{ transform:translateY(-30px); opacity:0; } }
-  @keyframes pop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.06); } 100%{ transform:scale(1); } }
+  .fog{ background:#0b1220 !important; box-shadow:none !important; }
+  .fog>*{display:none !important}
 
-  .confetti{ position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:998; }
-  .confetti .piece{
-    position:absolute; width:10px; height:16px; will-change: transform, opacity; opacity:.9; border-radius:2px; animation: fall linear forwards;
-  }
-  @keyframes fall{ 0%{ transform: translate(var(--sx,0), -10vh) rotate(0deg); opacity:1; }
-                   100%{ transform: translate(var(--ex,0), 110vh) rotate(720deg); opacity:0.9; } }
+  .win{margin-top:6px; text-align:center; font-weight:bold;}
 </style>
 </head>
-<body>
+<body onkeydown="handleKey(event)">
 
 <div id="bg" class="bg-fixed" aria-hidden="true"></div>
 <div class="bg-overlay" aria-hidden="true"></div>
@@ -164,48 +167,51 @@
   <main class="wrap">
     <div class="bar"><button id="regen">Neu erzeugen</button></div>
 
-    <div class="frame" id="frame">
-      <div id="maze" class="maze" aria-label="Labyrinth" role="grid" tabindex="0"></div>
+    <div class="frame">
+      <div
+        id="maze"
+        class="maze"
+        aria-label="Labyrinth"
+        role="grid"
+        tabindex="0"
+        ontouchstart="onTouchStart(event)"
+        ontouchmove="onTouchMove(event)"
+        ontouchend="onTouchEnd(event)"
+      ></div>
     </div>
 
     <p class="hint">Falls es zu schwer ist, dann ist hier eine Taschenlampe:</p>
-    <div class="bar"><button id="fogToggle" class="toggle" aria-pressed="false">Sichtfeld AN</button></div>
-
-    <div class="controls" aria-label="Pfeiltasten">
-      <button class="btn up"    aria-label="Nach oben">▲</button>
-      <button class="btn left"  aria-label="Nach links">◀</button>
-      <button class="btn"       aria-label="Zentrum" disabled>🎅</button>
-      <button class="btn right" aria-label="Nach rechts">▶</button>
-      <button class="btn down"  aria-label="Nach unten">▼</button>
+    <div class="bar">
+      <button id="fogToggle" class="toggle" aria-pressed="false">Sichtfeld AN</button>
     </div>
 
-    <div class="win" id="win" style="display:none">Geschafft! Merke dir den Buchstaben: <strong id="letter">N</strong></div>
+    <div class="controls" aria-label="Pfeiltasten">
+      <button class="btn up"    aria-label="Nach oben"    onclick="move(-1,0)">▲</button>
+      <button class="btn left"  aria-label="Nach links"   onclick="move(0,-1)">◀</button>
+      <button class="btn"       aria-label="Zentrum" disabled>🎅</button>
+      <button class="btn right" aria-label="Nach rechts"   onclick="move(0,1)">▶</button>
+      <button class="btn down"  aria-label="Nach unten"    onclick="move(1,0)">▼</button>
+    </div>
+
+    <div class="win" id="win" style="display:none">
+      Geschafft! Merke dir den Buchstaben: <strong id="letter">N</strong>
+    </div>
   </main>
 
   <footer><p><a href="index.html">Zurück zum Kalender</a></p></footer>
 </div>
 
-<div id="confetti" class="confetti" aria-hidden="true"></div>
-<div id="party" class="party" role="status" aria-live="polite">
-  <div class="message" id="partyMsg">🎉 Geschafft! Nikolaus hat das Haus gefunden. Merke dir den Buchstaben: <strong>N</strong> 🎉</div>
-</div>
-
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-  /* dein kompletter JS-Code HIER hinein */
-/* ==== Bilder ==== */
-const backgroundImageURL = "assets/nikolaus_map.png";
-const playerImageURL     = ""; // optional
-const goalImageURL       = ""; // optional
-const bgEl               = document.getElementById('bg');
-
+/* =====Bilder===== */
+var backgroundImageURL = "assets/nikolaus_map.png";
+var bgEl = document.getElementById('bg');
 if (backgroundImageURL){
-  const safeURL = encodeURI(backgroundImageURL);
+  var safeURL = encodeURI(backgroundImageURL);
   bgEl.style.backgroundImage = "url('" + safeURL + "')";
 }
 
-/* ==== DEIN 29×29-Level ==== */
-const LEVEL = [
+/* ===== Level (29x29, wie von dir) ===== */
+var LEVEL = [
  [1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
  [1,0,0,0,0,0,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1],
  [1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1],
@@ -236,353 +242,249 @@ const LEVEL = [
  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-/* ==== Parameter ==== */
-const FOREST=2, WALL=1, PATH=0;
-const SIZE = 29;
-let GRID = SIZE + 2;
-let grid, position, goal;
-let lampOn = false;
-const FOG_RADIUS = 2;
-let visited;
+var FOREST = 2, WALL = 1, PATH = 0;
+var SIZE = 29;
+var GRID = SIZE + 2;
+var grid, position, goal;
+var lampOn = false;
+var FOG_RADIUS = 2;
+var visited = {};   // "r,c" -> true
 
-/* DOM */
-const mazeEl   = document.getElementById('maze');
-const regenBtn = document.getElementById('regen');
-const fogBtn   = document.getElementById('fogToggle');
-const upBtn    = document.querySelector('.up');
-const downBtn  = document.querySelector('.down');
-const leftBtn  = document.querySelector('.left');
-const rightBtn = document.querySelector('.right');
-const partyEl  = document.getElementById('party');
-const partyMsg = document.getElementById('partyMsg');
-const confettiEl = document.getElementById('confetti');
+var mazeEl = document.getElementById('maze');
+var regenBtn = document.getElementById('regen');
+var fogBtn = document.getElementById('fogToggle');
 
-/* Events */
-regenBtn.addEventListener('click', generateAndDraw);
-fogBtn.addEventListener('click', function(){
+regenBtn.onclick = function(){ generateAndDraw(); };
+fogBtn.onclick = function(){
   lampOn = !lampOn;
   fogBtn.textContent = lampOn ? 'Sichtfeld AUS' : 'Sichtfeld AN';
   fogBtn.setAttribute('aria-pressed', String(lampOn));
   draw();
-});
-partyEl.addEventListener('click', hideParty);
-window.addEventListener('resize', fitCellSize);
+};
 
-/* Start */
+/* ===== Setup ===== */
 generateAndDraw();
-attachControls();
 
-/* ==== Spielfeld an Handy anpassen ==== */
-function fitCellSize(){
-  const cols = GRID || (SIZE + 2);       // Anzahl Spalten (31)
-  const vw = Math.max(
-    document.documentElement.clientWidth || 0,
-    window.innerWidth || 0
-  );
-  const margin = 24;                     // kleiner Rand links/rechts
-  const cellByW = Math.floor((vw - margin) / cols);
-  const cell = Math.max(8, Math.min(22, cellByW)); // min/max Größe
-  const gap  = cell < 16 ? 1 : 2;
-
-  document.documentElement.style.setProperty('--cell', cell + 'px');
-  document.documentElement.style.setProperty('--gap',  gap  + 'px');
-}
-
-/* ==== Pipeline ==== */
 function generateAndDraw(){
   GRID = SIZE + 2;
   document.documentElement.style.setProperty('--cols', String(GRID));
 
-  const carve = copyLevel(LEVEL);
-  const midCol = Math.floor(SIZE/2);
-  const bestEntranceColInner = pickEntranceFromTopRow(carve, midCol);
-  const entranceColBig = bestEntranceColInner + 1;
-
-  const result = buildBigGrid(carve, entranceColBig);
+  var result = buildGridWithForestAndEntrance();
   grid = result.grid;
-  position = result.position;
+  position = result.start;
+  visited = {};
+  visited[position.r + "," + position.c] = true;
   goal = computeFarthestGoal(grid, position);
-
-  visited = new Set();
-  visited.add(position.r + "," + position.c);
-
-  fitCellSize();   // HIER an Display anpassen
   draw();
 }
 
-/* ==== Helfer ==== */
-function copyLevel(arr){
-  return arr.map(function(row){ return row.slice(); });
-}
+/* baue 31x31 mit Wald außen und Eingang oben an erster 0 in LEVEL-Zeile 0 */
+function buildGridWithForestAndEntrance(){
+  var n = SIZE;
+  var g = [];
+  var r,c;
 
-function pickEntranceFromTopRow(carve, centerC){
-  const candidates = [];
-  for (let c=0;c<SIZE;c++){
-    if (carve[0][c]===PATH) candidates.push(c);
-  }
-  if (!candidates.length){
-    const c = centerC;
-    carve[0][c]=PATH; return c;
-  }
-  let best=candidates[0], bestD=-1;
-  for (let i=0;i<candidates.length;i++){
-    const c = candidates[i];
-    const d=Math.abs(c-centerC);
-    if (d>bestD){ bestD=d; best=c; }
-  }
-  return best;
-}
-
-function buildBigGrid(carve, entranceColBig){
-  const n=carve.length;
-  const big = [];
-  for(let R=0; R<n+2; R++){
-    const row = [];
-    for(let C=0; C<n+2; C++){
-      if (R===0||C===0||R===n+1||C===n+1) row.push(FOREST);
-      else row.push(carve[R-1][C-1]);
+  for(r=0; r<n+2; r++){
+    g[r] = [];
+    for(c=0; c<n+2; c++){
+      if (r===0 || c===0 || r===n+1 || c===n+1){
+        g[r][c] = FOREST;
+      } else {
+        g[r][c] = LEVEL[r-1][c-1];
+      }
     }
-    big.push(row);
   }
-  big[0][entranceColBig]=PATH;
-  big[1][entranceColBig]=PATH;
-  const start = { r: 0, c: entranceColBig };
-  return { grid: big, position:start };
+
+  var entranceInnerCol = -1;
+  for(c=0;c<n;c++){
+    if (LEVEL[0][c] === PATH){ entranceInnerCol = c; break; }
+  }
+  if (entranceInnerCol === -1) entranceInnerCol = Math.floor(n/2);
+
+  var ec = entranceInnerCol + 1; // + Waldrand
+  g[0][ec] = PATH;  // Öffnung im Wald oben
+  g[1][ec] = PATH;
+
+  var start = {r:0, c:ec};
+  return {grid:g, start:start};
 }
 
-function computeFarthestGoal(grid, start){
-  const rows=grid.length, cols=grid[0].length;
-  const dist=[];
-  for(let r=0;r<rows;r++){
-    const row = new Array(cols);
-    for(let c=0;c<cols;c++) row[c]=-1;
-    dist.push(row);
+/* BFS, weitester PATH vom Start ist das Ziel */
+function computeFarthestGoal(g, start){
+  var rows = g.length, cols = g[0].length;
+  var dist = [];
+  var r,c;
+  for(r=0;r<rows;r++){
+    dist[r] = [];
+    for(c=0;c<cols;c++) dist[r][c] = -1;
   }
-  const q=[];
-  dist[start.r][start.c]=0;
-  q.push({r:start.r,c:start.c});
-  let best={r:start.r,c:start.c};
-  const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
-
+  var q = [];
+  dist[start.r][start.c] = 0;
+  q.push({r:start.r, c:start.c});
+  var best = {r:start.r, c:start.c};
+  var DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
   while(q.length){
-    const cur=q.shift();
-    const r=cur.r, c=cur.c;
-    const d=dist[r][c];
-    if (d>dist[best.r][best.c]) best={r:r,c:c};
-    for(let i=0;i<DIRS.length;i++){
-      const dr=DIRS[i][0], dc=DIRS[i][1];
-      const nr=r+dr, nc=c+dc;
-      if(nr<0||nc<0||nr>=rows||nc>=cols) continue;
-      if(grid[nr][nc]!==PATH) continue;
-      if(dist[nr][nc]!==-1) continue;
-      dist[nr][nc]=d+1;
+    var cur = q.shift();
+    r = cur.r; c = cur.c;
+    var d = dist[r][c];
+    if (d > dist[best.r][best.c]) best = {r:r, c:c};
+    for(var i=0;i<DIRS.length;i++){
+      var nr = r + DIRS[i][0];
+      var nc = c + DIRS[i][1];
+      if (nr<0||nc<0||nr>=rows||nc>=cols) continue;
+      if (g[nr][nc] !== PATH) continue;
+      if (dist[nr][nc] !== -1) continue;
+      dist[nr][nc] = d+1;
       q.push({r:nr,c:nc});
     }
   }
   return best;
 }
 
-/* ==== Render / Sicht ==== */
+/* ===== Render + Sichtfeld ===== */
 function draw(){
-  const vis = computeVisibilityStates();
-  const seenEver = vis.seenEver;
-  const fringeNow = vis.fringeNow;
+  var vis = computeVisibilityStates();
+  var seenEver = vis.seenEver;
+  var fringeNow = vis.fringeNow;
 
-  mazeEl.innerHTML = '';
-  for (let r=0; r<GRID; r++){
-    for (let c=0; c<GRID; c++){
-      const cell = document.createElement('div');
-      const v = grid[r][c];
+  mazeEl.innerHTML = "";
+  var r,c,v,cell;
+
+  for(r=0;r<GRID;r++){
+    for(c=0;c<GRID;c++){
+      v = grid[r][c];
+      cell = document.createElement('div');
 
       if (r===goal.r && c===goal.c){
         cell.className = 'cell goal';
-        if (goalImageURL){
-          const s = document.createElement('div');
-          s.className = 'goal-sprite';
-          s.style.backgroundImage = "url('" + goalImageURL + "')";
-          cell.appendChild(s);
-        } else {
-          cell.classList.add('fallback');
-        }
-      } else if (v===WALL) {
+      } else if (v===WALL){
         cell.className = 'cell wall';
-      } else if (v===FOREST) {
+      } else if (v===FOREST){
         cell.className = 'cell forest';
       } else {
         cell.className = 'cell path';
       }
 
       if (r===position.r && c===position.c){
-        const s = document.createElement('div');
-        if (playerImageURL){
-          s.className = 'sprite';
-          s.style.backgroundImage = "url('" + playerImageURL + "')";
-        } else {
-          s.className = 'sprite emoji';
-          s.textContent = '🎅';
-        }
+        var s = document.createElement('div');
+        s.className = 'sprite emoji';
+        s.textContent = '🎅';
         s.setAttribute('aria-hidden','true');
         cell.classList.add('player');
-        cell.tabIndex = 0;
         cell.appendChild(s);
       }
 
       if (!lampOn){
-        if (!seenEver[r][c]) {
-          if (v !== FOREST) cell.classList.add('fog');
-        } else if (fringeNow[r][c]) {
-          if (v===PATH || (r===goal.r && c===goal.c)){ cell.classList.add('dim'); }
+        if (!seenEver[r][c] && v !== FOREST) {
+          cell.classList.add('fog');
+        } else if (fringeNow[r][c] && (v===PATH || (r===goal.r && c===goal.c))){
+          cell.classList.add('dim');
         }
       }
 
       mazeEl.appendChild(cell);
     }
   }
-  focusPlayer();
 }
 
 function computeVisibilityStates(){
-  const seenEver = [];
-  const fringeNow = [];
-  for(let r=0;r<GRID;r++){
-    const row1=[], row2=[];
-    for(let c=0;c<GRID;c++){ row1.push(false); row2.push(false); }
-    seenEver.push(row1); fringeNow.push(row2);
+  var seenEver = [], fringeNow = [];
+  var r,c;
+  for(r=0;r<GRID;r++){
+    seenEver[r] = [];
+    fringeNow[r] = [];
+    for(c=0;c<GRID;c++){
+      seenEver[r][c] = false;
+      fringeNow[r][c] = false;
+    }
   }
 
   if (lampOn){
-    for (let r=0;r<GRID;r++) for (let c=0;c<GRID;c++) seenEver[r][c]=true;
-    return { seenEver: seenEver, fringeNow: fringeNow };
+    for(r=0;r<GRID;r++) for(c=0;c<GRID;c++) seenEver[r][c]=true;
+    return {seenEver:seenEver, fringeNow:fringeNow};
   }
 
-  if (visited){
-    visited.forEach(function(key){
-      const parts = key.split(',');
-      const r = parseInt(parts[0],10);
-      const c = parseInt(parts[1],10);
-      if (r>=0 && c>=0 && r<GRID && c<GRID) seenEver[r][c]=true;
-    });
+  for (var key in visited){
+    if (!visited.hasOwnProperty(key)) continue;
+    var parts = key.split(',');
+    r = parseInt(parts[0],10);
+    c = parseInt(parts[1],10);
+    if (r>=0 && c>=0 && r<GRID && c<GRID) seenEver[r][c] = true;
   }
 
-  const R = position.r, C = position.c;
-  for (let r=R-FOG_RADIUS; r<=R+FOG_RADIUS; r++){
-    for (let c=C-FOG_RADIUS; c<=C+FOG_RADIUS; c++){
+  var R = position.r, C = position.c;
+  for(r=R-FOG_RADIUS;r<=R+FOG_RADIUS;r++){
+    for(c=C-FOG_RADIUS;c<=C+FOG_RADIUS;c++){
       if (r>=0 && c>=0 && r<GRID && c<GRID){
         if (Math.max(Math.abs(r-R), Math.abs(c-C)) <= FOG_RADIUS){
-          const key = r + "," + c;
-          if (!visited.has(key)) fringeNow[r][c] = true;
+          var key2 = r + "," + c;
+          if (!visited[key2]) fringeNow[r][c] = true;
           seenEver[r][c] = true;
         }
       }
     }
   }
-  return { seenEver: seenEver, fringeNow: fringeNow };
+  return {seenEver:seenEver, fringeNow:fringeNow};
 }
 
-/* WICHTIG: hier kein preventScroll mehr -> keine Fehler -> Controls werden registriert */
-function focusPlayer(){
-  const p = mazeEl.querySelector('.player');
-  if (p && p.focus){
-    try { p.focus(); } catch(e){}
-  }
-}
-
-/* ==== Party ==== */
-let partyTimeout;
-function showParty(){
-  partyMsg.innerHTML = "🎉 Geschafft! Nikolaus hat das Haus gefunden. Merke dir den Buchstaben: <strong>N</strong> 🎉";
-  partyEl.classList.add('show');
-  spawnConfetti(140);
-  clearTimeout(partyTimeout);
-  partyTimeout = setTimeout(hideParty, 4500);
-}
-function hideParty(){
-  partyEl.classList.remove('show');
-  confettiEl.innerHTML = '';
-}
-function spawnConfetti(n){
-  if (n === undefined) n = 120;
-  confettiEl.innerHTML = '';
-  const colors = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#22c55e','#eab308'];
-  const vw = window.innerWidth;
-  for (let i=0;i<n;i++){
-    const d = document.createElement('div');
-    d.className = 'piece';
-    d.style.background = colors[i % colors.length];
-    const startX = Math.random()*vw;
-    const endX   = startX + (Math.random()*200 - 100);
-    d.style.left = startX + 'px';
-    d.style.setProperty('--sx', '0px');
-    d.style.setProperty('--ex', (endX - startX) + 'px');
-    d.style.animationDuration = (2500 + Math.random()*1200) + 'ms';
-    d.style.animationDelay = (Math.random()*200) + 'ms';
-    const w = 8 + Math.random()*8, h = 10 + Math.random()*18;
-    d.style.width = w + 'px'; d.style.height = h + 'px';
-    d.style.transform = "translate(0,-10vh) rotate(" + (Math.random()*60-30) + "deg)";
-    confettiEl.appendChild(d);
-  }
-}
-
-/* ==== Bewegung & Steuerung ==== */
+/* ===== Steuerung ===== */
 function canMove(r,c){
   return !(r<0||c<0||r>=GRID||c>=GRID) && grid[r][c]!==WALL;
 }
+
 function move(dr,dc){
-  const nr=position.r+dr, nc=position.c+dc;
-  if(!canMove(nr,nc)) return;
-  position={r:nr,c:nc};
-  visited.add(nr + "," + nc);
+  if (!grid) return;
+  var nr = position.r + dr;
+  var nc = position.c + dc;
+  if (!canMove(nr,nc)) return;
+  position = {r:nr, c:nc};
+  visited[nr + "," + nc] = true;
   draw();
-  if(position.r===goal.r && position.c===goal.c){
-    document.getElementById('win').style.display='block';
-    document.getElementById('letter').textContent='N';
-    showParty();
+
+  if (position.r===goal.r && position.c===goal.c){
+    document.getElementById('win').style.display = 'block';
+    document.getElementById('letter').textContent = 'N';
   }
 }
 
-function keyHandler(e){
-  const k=e.key.toLowerCase();
-  if(k==='arrowup' || k==='w') move(-1,0);
-  else if(k==='arrowdown' || k==='s') move(1,0);
-  else if(k==='arrowleft' || k==='a') move(0,-1);
-  else if(k==='arrowright' || k==='d') move(0,1);
+function handleKey(e){
+  var k = e.key;
+  if (!k) return;
+  k = k.toLowerCase();
+  if (k==='arrowup' || k==='w'){ move(-1,0); }
+  else if (k==='arrowdown' || k==='s'){ move(1,0); }
+  else if (k==='arrowleft' || k==='a'){ move(0,-1); }
+  else if (k==='arrowright' || k==='d'){ move(0,1); }
 }
 
-/* Touch – horizontale Wischgeste */
-let sx=0, sy=0, st=0;
-const SWIPE_MIN=22, SWIPE_MAXT=600;
+/* Touch-Steuerung: Wischen links/rechts */
+var sx=0, sy=0, st=0;
+var SWIPE_MIN=22, SWIPE_MAXT=600;
+
 function onTouchStart(e){
   if (!e.touches || e.touches.length!==1) return;
-  sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now();
+  sx=e.touches[0].clientX;
+  sy=e.touches[0].clientY;
+  st=Date.now();
 }
-function onTouchMove(e){}
+function onTouchMove(e){ /* ignorieren, nur zum Scrollen */ }
 function onTouchEnd(e){
-  const dt=Date.now()-st; if(dt>SWIPE_MAXT) return;
-  const t=e.changedTouches && e.changedTouches[0]; if(!t) return;
-  const dx=t.clientX-sx, dy=t.clientY-sy;
+  var dt = Date.now()-st;
+  if (dt>SWIPE_MAXT) return;
+  var t = e.changedTouches && e.changedTouches[0];
+  if (!t) return;
+  var dx = t.clientX - sx;
+  var dy = t.clientY - sy;
   if (Math.max(Math.abs(dx),Math.abs(dy))<SWIPE_MIN) return;
   if (Math.abs(dx)>Math.abs(dy)){
-    if (dx>0) move(0, 1); else move(0, -1);
+    if (dx>0) move(0,1); else move(0,-1);
     e.preventDefault();
   }
 }
-
-function attachControls(){
-  document.addEventListener('keydown', keyHandler);
-  mazeEl.addEventListener('touchstart', onTouchStart, {passive:true});
-  mazeEl.addEventListener('touchmove',  onTouchMove,  {passive:true});
-  mazeEl.addEventListener('touchend',   onTouchEnd,   {passive:false});
-  upBtn.onclick    = function(){ move(-1,0); };
-  downBtn.onclick  = function(){ move( 1,0); };
-  leftBtn.onclick  = function(){ move( 0,-1); };
-  rightBtn.onclick = function(){ move( 0, 1); };
-}
-    generateAndDraw();
-  attachControls();
-});
 </script>
 </body>
 </html>
+
 
 
 
