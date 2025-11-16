@@ -6,243 +6,187 @@
 <title>6. Dezember – Nikolaus im harten Labyrinth</title>
 <style>
   :root{
-    --cell: 22px; --gap: 2px; --cols: 10;
-    --wall:#0f172a; --path:#ffffff; --path-dim:#cbd5e1;
-    --forest:#166534; --house:#ffd54f; --grid-outline:#00000033;
-    --player-scale: 1.2; --goal-scale: 1.05;
+    --cell: 22px;
+    --gap: 2px;
+    --cols: 10;
+    --wall:#0f172a;
+    --path:#ffffff;     /* besuchte Wege */
+    --path-dim:#cbd5e1; /* graue Wege (im Sichtkegel, unbesucht) */
+    --forest:#166534;   /* Außenwald */
+    --house:#ffd54f;    /* Ziel */
+    --grid-outline:#00000033;
+    --player-scale: 1.2;
+    --goal-scale:   1.05;
   }
 
-  /* Fixierter Hintergrund als eigene Ebene (auch fürs Handy) */
-  .bg-fixed{
-    position:fixed;
-    inset:0;
-    z-index:0;
-    background-repeat:no-repeat;
-    background-size:cover;
-    background-position:center;
-    background-attachment:fixed;
-  }
-
-  .bg-overlay{
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    background:linear-gradient(0deg, rgba(0,0,0,.16), rgba(0,0,0,.16));
-    z-index:0;
-  }
-
-  html, body{
-    margin:0;
-    padding:0;
-    height:100%;
-  }
-
-  /* Body scrollt nicht, nur .page */
   body{
-    min-height:100vh;
+    margin:0;height:100%;
     font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    color:#111;
-    background:none;
-    overflow:hidden;
+    background:#e8f3ea; color:#111;
+    background-size:cover; background-position:center; background-attachment:fixed;
   }
+  .bg-overlay{ position:fixed; inset:0; pointer-events:none; background:linear-gradient(0deg, rgba(0,0,0,.16), rgba(0,0,0,.16)); z-index:-1; }
 
-  .page{
-    position:relative;
-    height:100vh;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-
-  header,main,footer{ position:relative; z-index:1; }
   header,footer{padding:10px 8px; text-align:center}
-
   h1{margin:0 0 6px; font-size:1.1rem}
   .sub{opacity:.9; font-size:.95rem}
   .intro{
-    margin:8px auto 0;
-    max-width:800px;
-    padding:8px 10px;
-    background:#fff;
-    border:1px solid #dbe2ea;
-    border-radius:10px;
-    line-height:1.35;
+    margin:8px auto 0; max-width:800px; padding:8px 10px;
+    background:#fff; border:1px solid #dbe2ea; border-radius:10px; line-height:1.35;
   }
 
   .wrap{display:grid; place-items:center; padding:8px; gap:8px}
   .bar{display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap}
-  .bar button{padding:8px 12px; border-radius:10px; border:1px solid #b8c1cc; background:#fff; font:inherit; cursor:pointer;}
+  .bar button{
+    padding:8px 12px; border-radius:10px; border:1px solid #b8c1cc; background:#fff; font:inherit; cursor:pointer;
+  }
 
   .frame{
     padding:6px; border-radius:14px; background:rgba(255,255,255,.65);
     box-shadow:0 10px 28px rgba(0,0,0,.18), inset 0 0 0 2px var(--grid-outline);
-    max-width:100vw; overflow:visible;
+    max-width:100vw;
+    max-height:calc(100vh - 220px);
+    overflow:auto;
   }
+
   .maze{
-    display:grid; grid-template-columns:repeat(var(--cols), var(--cell)); grid-auto-rows:var(--cell);
-    gap:var(--gap); touch-action: pan-y; outline:2px solid var(--grid-outline); outline-offset:4px;
-    background:#fafafaAA; border-radius:10px; isolation:isolate;
+    display:grid;
+    grid-template-columns:repeat(var(--cols), var(--cell));
+    grid-auto-rows:var(--cell);
+    gap:var(--gap);
+    /* Vertikales Seiten-Scrollen erlauben */
+    touch-action: pan-y;
+    outline:2px solid var(--grid-outline);
+    outline-offset:4px;
+    background:#fafafaAA; border-radius:10px;
+    isolation:isolate;
   }
 
   .cell{
-    width:var(--cell); height:var(--cell); border-radius:4px; position:relative; display:grid; place-items:center;
-    user-select:none; overflow:visible; box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
+    width:var(--cell); height:var(--cell);
+    border-radius:4px; position:relative; display:grid; place-items:center;
+    user-select:none; overflow:visible;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
   }
-  .wall{background:var(--wall)}
-  .path{background:var(--path)}
-  .path.dim{background:var(--path-dim)}
-  .forest{background:var(--forest)}
-  .goal{background:var(--house)}
-  .goal.fallback::after{content:"🏠"; font-size:calc(var(--cell)*0.75);}
-  .goal.dim{filter:brightness(.85)}
 
+  .wall{   background:var(--wall); }
+  .path{   background:var(--path); }            /* besucht */
+  .path.dim{ background:var(--path-dim); }      /* im Sichtkegel, aber unbesucht */
+  .forest{ background:var(--forest); }
+
+  .goal{ background:var(--house); }
+  .goal.fallback::after{ content:"🏠"; font-size:calc(var(--cell)*0.75); }
+
+  /* Spieler- & Ziel-Sprites */
   .sprite{
     position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%);
-    width:calc(var(--cell)*var(--player-scale)); height:calc(var(--cell)*var(--player-scale));
-    display:grid; place-items:center; background-repeat:no-repeat; background-size:contain; background-position:center; pointer-events:none; text-shadow:0 1px 2px rgba(0,0,0,.35);
+    width:calc(var(--cell) * var(--player-scale)); height:calc(var(--cell) * var(--player-scale));
+    display:grid; place-items:center; background-repeat:no-repeat; background-size:contain; background-position:center;
+    pointer-events:none; text-shadow:0 1px 2px rgba(0,0,0,.35);
   }
-  .sprite.emoji{ font-size:calc(var(--cell)*var(--player-scale)*0.9); }
+  .sprite.emoji{ font-size:calc(var(--cell) * var(--player-scale)*0.9); }
   .goal-sprite{
     position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%);
-    width:calc(var(--cell)*var(--goal-scale)); height:calc(var(--cell)*var(--goal-scale)); background-repeat:no-repeat; background-size:contain; background-position:center; pointer-events:none;
+    width:calc(var(--cell) * var(--goal-scale)); height:calc(var(--cell) * var(--goal-scale));
+    background-repeat:no-repeat; background-size:contain; background-position:center; pointer-events:none;
   }
 
-  .fog{ background:#0b1220 !important; box-shadow:none !important; }
-  .fog>*{display:none !important}
+  /* Fog of War – ungesehene Zellen komplett verbergen (außer FOREST) */
+  .fog{
+    position:relative;
+    background:#0b1220 !important;
+    box-shadow:none !important;
+  }
+  .fog::after{ display:none; }
+  .fog > * { display:none !important; }
 
-  .hint{ font-size:.9rem; opacity:.9; margin:2px 0 0; text-align:center; }
-  .controls{ display:grid; grid-template-areas: ". up ." "left center right" ". down ."; gap:8px; touch-action:none; }
-  .btn{ grid-area:center; width:52px;height:52px;border-radius:12px;border:1px solid #b8c1cc;background:#fff;font-size:20px; }
-  .btn:active{ transform:translateY(1px); } .up{grid-area:up}.down{grid-area:down}.left{grid-area:left}.right{grid-area:right}
+  .hint{
+    font-size:.9rem; opacity:.9; margin:2px 0 0; text-align:center;
+  }
+
+  .controls{
+    display:grid;
+    grid-template-areas:
+      ". up ."
+      "left center right"
+      ". down .";
+    gap:8px; touch-action:none;
+  }
+  .btn{
+    grid-area:center; width:52px;height:52px;border-radius:12px;border:1px solid #b8c1cc;background:#fff;font-size:20px;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .up{grid-area:up}.down{grid-area:down}.left{grid-area:left}.right{grid-area:right}
 
   @media (max-width:400px){
+    .frame{ max-height: calc(100vh - 200px); }
     .btn{ width:46px; height:46px; font-size:18px; }
   }
-
-  /* Party-Overlay (deiner Original-Version entsprechend, kann bleiben) */
-  .party{
-    position:fixed; inset:0; display:none; place-items:center;
-    pointer-events:none; z-index:999;
-  }
-  .party.show{ display:grid; }
-  .party .message{
-    background:rgba(255,255,255,.95);
-    border:1px solid #e6e6e6;
-    border-radius:16px;
-    padding:14px 20px;
-    font-weight:700;
-    font-size:1.15rem;
-    box-shadow:0 10px 26px rgba(0,0,0,.18);
-    transform:translateY(-30px);
-    animation: fly-in .6s ease-out forwards, pop 1.6s ease-in-out 0.6s 2;
-    text-align:center;
-  }
-  @keyframes fly-in{ to{ transform:translateY(0); opacity:1; } from{ transform:translateY(-30px); opacity:0; } }
-  @keyframes pop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.06); } 100%{ transform:scale(1); } }
-
-  .confetti{ position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:998; }
-  .confetti .piece{
-    position:absolute; width:10px; height:16px; will-change: transform, opacity; opacity:.9; border-radius:2px; animation: fall linear forwards;
-  }
-  @keyframes fall{ 0%{ transform: translate(var(--sx,0), -10vh) rotate(0deg); opacity:1; }
-                   100%{ transform: translate(var(--ex,0), 110vh) rotate(720deg); opacity:0.9; } }
 </style>
 </head>
 <body>
+<div class="bg-overlay"></div>
 
-<div id="bg" class="bg-fixed" aria-hidden="true"></div>
-<div class="bg-overlay" aria-hidden="true"></div>
+<header>
+  <h1>6. Dezember – Nikolaus im harten Labyrinth</h1>
+  <div class="sub">Langer Umweg ums Haus, viele Sackgassen. Außenwald bleibt sichtbar.</div>
+  <p class="intro">„Von draußen vom Walde, da komme ich her, aber ich habe leider den Weg zur Eichbühlstraße vergessen. Kannst du mir zeigen, wie ich zu deinem Haus komme?“</p>
+</header>
 
-<div class="page">
-  <header>
-    <h1>6. Dezember – Nikolaus im harten Labyrinth</h1>
-    <div class="sub">Langer Umweg ums Haus, viele Sackgassen. Außenwald bleibt sichtbar.</div>
-    <p class="intro">„Von draußen vom Walde, da komme ich her, aber ich habe leider den Weg zur Eichbühlstraße vergessen. Kannst du mir zeigen, wie ich zu deinem Haus komme?“</p>
-  </header>
+<main class="wrap">
+  <!-- Obere Leiste: nur Neu erzeugen -->
+  <div class="bar">
+    <button id="regen">Neu erzeugen</button>
+  </div>
 
-  <main class="wrap">
-    <div class="bar"><button id="regen">Neu erzeugen</button></div>
+  <!-- Spielfeld -->
+  <div class="frame" id="frame">
+    <div id="maze" class="maze" aria-label="Labyrinth" role="grid" tabindex="0"></div>
+  </div>
 
-    <div class="frame" id="frame">
-      <div id="maze" class="maze" aria-label="Labyrinth" role="grid" tabindex="0"></div>
-    </div>
+  <!-- Hinweis und Taschenlampen-Knopf UNTER dem Spielfeld -->
+  <p class="hint">Falls es zu schwer ist, dann ist hier eine Taschenlampe:</p>
+  <div class="bar">
+    <button id="fogToggle" class="toggle" aria-pressed="false">Sichtfeld AN</button>
+  </div>
 
-    <p class="hint">Falls es zu schwer ist, dann ist hier eine Taschenlampe:</p>
-    <div class="bar"><button id="fogToggle" class="toggle" aria-pressed="false">Sichtfeld AN</button></div>
+  <!-- D-Pad -->
+  <div class="controls" aria-label="Pfeiltasten">
+    <button class="btn up"    aria-label="Nach oben">▲</button>
+    <button class="btn left"  aria-label="Nach links">◀</button>
+    <button class="btn"       aria-label="Zentrum" disabled>🎅</button>
+    <button class="btn right" aria-label="Nach rechts">▶</button>
+    <button class="btn down"  aria-label="Nach unten">▼</button>
+  </div>
 
-    <div class="controls" aria-label="Pfeiltasten">
-      <button class="btn up"    aria-label="Nach oben">▲</button>
-      <button class="btn left"  aria-label="Nach links">◀</button>
-      <button class="btn"       aria-label="Zentrum" disabled>🎅</button>
-      <button class="btn right" aria-label="Nach rechts">▶</button>
-      <button class="btn down"  aria-label="Nach unten">▼</button>
-    </div>
+  <div class="win" id="win" style="display:none">Geschafft! Merke dir den Buchstaben: <strong id="letter">N</strong></div>
+</main>
 
-    <div class="win" id="win" style="display:none">Geschafft! Merke dir den Buchstaben: <strong id="letter">N</strong></div>
-  </main>
-
-  <footer><p><a href="index.html">Zurück zum Kalender</a></p></footer>
-</div>
-
-<div id="confetti" class="confetti" aria-hidden="true"></div>
-<div id="party" class="party" role="status" aria-live="polite">
-  <div class="message" id="partyMsg">🎉 Geschafft! Nikolaus hat das Haus gefunden. Merke dir den Buchstaben: <strong>N</strong> 🎉</div>
-</div>
+<footer><p><a href="index.html">Zurück zum Kalender</a></p></footer>
 
 <script>
 /* ==== Bilder ==== */
 const backgroundImageURL = "assets/nikolaus_map.png";
-const playerImageURL     = ""; // optional
-const goalImageURL       = ""; // optional
-const bgEl               = document.getElementById('bg');
-
+const playerImageURL     = ""; // z.B. "assets/nikolaus.png"
+const goalImageURL       = ""; // z.B. "assets/gelbes-haus.png"
 if (backgroundImageURL){
   const safeURL = encodeURI(backgroundImageURL);
-  bgEl.style.backgroundImage = `url('${safeURL}')`;
+  document.body.style.backgroundImage = `url('${safeURL}')`;
 }
-
-/* ==== 29×29-Level genau wie von dir ==== */
-const LEVEL = [
- [1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
- [1,0,0,0,0,0,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1],
- [1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1],
- [1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1],
- [1,0,1,0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,1,1],
- [1,0,1,0,1,0,0,0,1,0,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1],
- [1,0,1,0,1,1,1,1,1,0,1,1,0,0,0,0,0,0,1,1,0,1,1,1,1,1,0,1,1],
- [1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,0,0,0,1,0,1,1],
- [1,0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1],
- [1,0,0,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,0,0,0,0,1,0,1,1],
- [1,1,0,1,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,1,0,1,1,0,1,0,1,1],
- [1,1,0,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,1,1],
- [1,1,1,0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,1,1,0,1,1,1,1,1,1,1],
- [1,1,1,0,1,0,1,1,1,1,1,1,0,0,0,1,1,1,0,1,1,0,0,0,0,0,0,1,1],
- [1,1,1,0,1,0,0,0,0,1,0,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1,0,1,1],
- [1,1,1,0,1,0,1,1,0,1,1,1,0,1,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1],
- [1,1,1,0,1,0,1,0,0,1,0,0,0,1,1,0,1,1,1,1,1,1,1,0,1,1,0,1,1],
- [1,1,1,1,1,0,0,1,0,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,1,1,0,1,1],
- [1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,0,1,1],
- [1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1],
- [1,1,0,1,1,1,1,0,0,0,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1],
- [1,1,0,1,1,1,1,0,1,1,1,1,0,1,0,1,1,0,0,0,1,1,0,1,1,1,1,1,1],
- [1,1,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,0,1,0,0,0,0,1,1,1,1],
- [1,1,0,1,1,1,0,1,1,1,1,1,0,1,0,0,0,1,1,0,1,1,1,1,0,1,1,1,1],
- [1,1,0,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,0,0,1,1,1,1,0,0,0,1,1],
- [1,1,0,0,0,0,0,0,0,0,1,1,0,1,1,0,1,0,1,0,0,0,1,1,0,1,1,1,1],
- [1,1,0,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1],
- [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
 
 /* ==== Parameter ==== */
 const FOREST=2, WALL=1, PATH=0;
-const SIZE = 29;
-let GRID = SIZE + 2;
+const SIZE = 29;          /* handygerecht */
+let GRID = 0;
 let grid, position, goal;
 
-/* Taschenlampe */
-let lampOn = false;
+/* Sichtfelder:
+   - lampOn = „Sichtfeld AN“ -> ALLES sichtbar (Fog komplett aus)
+   - lampOn = false          -> Fog aktiv mit Sichtkegel
+*/
+let lampOn = false;       // Button startet AUS (dann Fog aktiv)
 const FOG_RADIUS = 2;
 
-/* Sichtbarkeits-Speicher */
 let visited;
 
 /* DOM */
@@ -250,148 +194,287 @@ const mazeEl   = document.getElementById('maze');
 const frameEl  = document.getElementById('frame');
 const regenBtn = document.getElementById('regen');
 const fogBtn   = document.getElementById('fogToggle');
+
+/* D-Pad Buttons */
 const upBtn    = document.querySelector('.up');
 const downBtn  = document.querySelector('.down');
 const leftBtn  = document.querySelector('.left');
 const rightBtn = document.querySelector('.right');
-const partyEl  = document.getElementById('party');
-const partyMsg = document.getElementById('partyMsg');
-const confettiEl = document.getElementById('confetti');
 
-/* Events */
 regenBtn.addEventListener('click', generateAndDraw);
 fogBtn.addEventListener('click', () => {
   lampOn = !lampOn;
+  // UI: Wenn AN -> kompletter Überblick
   fogBtn.textContent = lampOn ? 'Sichtfeld AUS' : 'Sichtfeld AN';
   fogBtn.setAttribute('aria-pressed', String(lampOn));
   draw();
 });
 window.addEventListener('resize', ()=>fitCellSize(true));
-partyEl.addEventListener('click', hideParty);
 
-/* Init */
+/* ==== Init ==== */
 generateAndDraw();
 
 /* ==== Pipeline ==== */
 function generateAndDraw(){
-  GRID = SIZE + 2;
+  GRID = SIZE + 2; // + äußerer Wald-Ring
   document.documentElement.style.setProperty('--cols', String(GRID));
 
-  const carve = copyLevel(LEVEL); // genau dein Level
-  const midCol = Math.floor(SIZE/2);
-  const bestEntranceColInner = pickEntranceFromTopRow(carve, midCol);
+  let carve = buildMazeComplex(SIZE); // 1) Maze
+  const mid = { r: Math.floor(SIZE/2), c: Math.floor(SIZE/2) };
+
+  // 2) Moat um die Mitte mit südlichem Tor -> man muss "rumlaufen"
+  carve = addMoatAroundCenter(carve, mid, 'S');
+
+  // 3) Eingang oben finden (max Distanz zur Mitte)
+  const dist = bfsDistances(carve, mid.r, mid.c);
+  const bestEntranceColInner = argmaxTopEntrance(carve, dist);
+  const entranceInner = { r: 1, c: bestEntranceColInner };
+
+  // 4) Kürzester Weg (durch das Süd-Tor erzwungen)
+  const solutionPath = shortestPath(carve, entranceInner, mid);
+
+  // 5) Viele und lange Sackgassen + Nebenäste
+  const pruned = pruneToSolutionWithDecoys(
+    carve,
+    solutionPath,
+    { decoyChance: 0.33, decoyMaxLen: 8, sideBranchChance: 0.35, sideBranchMaxLen: 4 }
+  );
+
+  // 6) Großes Grid + Start/Ziel
   const entranceColBig = bestEntranceColInner + 1;
+  ({grid, position, goal} = buildBigGrid(pruned, entranceColBig));
 
-  ({grid, position} = buildBigGrid(carve, entranceColBig));
-  goal = computeFarthestGoal(grid, position);
-
+  // 7) Sichtbarkeit initialisieren
   visited = new Set();
   visited.add(`${position.r},${position.c}`);
 
+  // 8) Render
   fitCellSize(true);
   draw();
   attachControls();
 }
 
-/* ==== Helfer für Level ==== */
-function copyLevel(arr){ return arr.map(row => row.slice()); }
+/* === Generator (DFS, kurvenlastig) === */
+function buildMazeComplex(n){
+  if (n % 2 === 0) n -= 1;
+  const rows=n, cols=n;
+  const carve = Array.from({length: rows}, () => Array.from({length: cols}, () => WALL));
+  const inBounds = (r,c) => r>0 && c>0 && r<rows-1 && c<cols-1;
 
-function pickEntranceFromTopRow(carve, centerC){
-  const candidates = [];
-  for (let c=0;c<SIZE;c++){
-    if (carve[0][c]===PATH) candidates.push(c);
+  let r = 1, c = Math.floor(cols/2);
+  carve[r][c] = PATH;
+
+  const stack = [[r,c]];
+  const DIRS = [[-2,0],[2,0],[0,-2],[0,2]];
+  let last = -1;
+
+  while (stack.length){
+    const [cr,cc] = stack[stack.length-1];
+    const cand = [];
+    for (let i=0;i<DIRS.length;i++){
+      const [dr,dc]=DIRS[i], nr=cr+dr, nc=cc+dc;
+      if (inBounds(nr,nc) && carve[nr][nc]===WALL) cand.push({i,nr,nc,mr:dr/2,mc:dc/2});
+    }
+    if (cand.length){
+      // Kurven bevorzugen -> längerer Pfad
+      cand.sort((a,b)=>{
+        const aTurn=(a.i===last)?1:0, bTurn=(b.i===last)?1:0;
+        if (aTurn!==bTurn) return aTurn - bTurn;
+        return Math.random()-0.5;
+      });
+      const p=cand[0];
+      carve[cr+p.mr][cc+p.mc]=PATH;
+      carve[p.nr][p.nc]=PATH;
+      stack.push([p.nr,p.nc]); last=p.i;
+    } else { stack.pop(); last=-1; }
   }
-  if (!candidates.length){
-    const c = centerC;
-    carve[0][c]=PATH; return c;
+
+  // zusätzliche Sackgassen im Rohmaze
+  const spurChance = 0.45;
+  for (let rr=1; rr<rows-1; rr++){
+    for (let cc=1; cc<cols-1; cc++){
+      if (carve[rr][cc]!==PATH || Math.random()>=spurChance) continue;
+      const dirs = [[-2,0],[2,0],[0,-2],[0,2]].sort(()=>Math.random()-0.5);
+      for (const [dr,dc] of dirs){
+        const a1=rr+dr/2, b1=cc+dc/2;
+        const a2=rr+dr,   b2=cc+dc;
+        if (!(a1>0&&b1>0&&a1<rows-1&&b1<cols-1)) continue;
+        if (!(a2>0&&b2>0&&a2<rows-1&&b2<cols-1)) continue;
+        if (carve[a1][b1]===WALL && carve[a2][b2]===WALL){
+          carve[a1][b1]=PATH;
+          if (Math.random()<0.9){ carve[a2][b2]=PATH;
+            const a3=a2+dr/2, b3=b2+dc/2;
+            if (Math.random()<0.4 && a3>0&&b3>0&&a3<rows-1&&b3<cols-1 && carve[a3][b3]===WALL){ carve[a3][b3]=PATH; }
+          }
+          break;
+        }
+      }
+    }
   }
-  let best=candidates[0], bestD=-1;
-  for (const c of candidates){
-    const d=Math.abs(c-centerC);
-    if (d>bestD){ bestD=d; best=c; }
-  }
-  return best;
+  return carve;
 }
 
-/* ==== Big grid mit Außenwald ==== */
+/* Moat (Wallgraben) um die Mitte mit Tor in gateDir ('N','S','E','W') */
+function addMoatAroundCenter(carve, center, gateDir='S'){
+  const R=carve.length, C=carve[0].length;
+  const inB=(r,c)=> r>=0 && c>=0 && r<R && c<C;
+  const ring = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  for (const [dr,dc] of ring){
+    const rr=center.r+dr, cc=center.c+dc;
+    if (inB(rr,cc)) carve[rr][cc]=WALL;
+  }
+  const gates = {N:[-1,0],S:[1,0],E:[0,1],W:[0,-1]};
+  const [gr, gc] = [center.r + gates[gateDir][0], center.c + gates[gateDir][1]];
+  if (inB(gr,gc)) carve[gr][gc]=PATH;
+  if (inB(center.r, center.c)) carve[center.r][center.c]=PATH;
+  return carve;
+}
+
+/* ==== BFS-Distanzen, kürzester Pfad ==== */
+function bfsDistances(carve, sr, sc){
+  const R=carve.length, C=carve[0].length;
+  const dist=Array.from({length:R},()=>Array(C).fill(Infinity));
+  const q=[]; if (carve[sr][sc]===PATH){ dist[sr][sc]=0; q.push([sr,sc]); }
+  const steps=[[1,0],[-1,0],[0,1],[0,-1]];
+  while(q.length){
+    const [r,c]=q.shift();
+    for(const [dr,dc] of steps){
+      const nr=r+dr, nc=c+dc;
+      if(nr<0||nc<0||nr>=R||nc>=C) continue;
+      if (carve[nr][nc]!==PATH) continue;
+      if (dist[nr][nc] > dist[r][c]+1){ dist[nr][nc]=dist[r][c]+1; q.push([nr,nc]); }
+    }
+  }
+  return dist;
+}
+
+function shortestPath(carve, start, goal){
+  const R=carve.length, C=carve[0].length;
+  const dist=bfsDistances(carve, start.r, start.c);
+  if (!Number.isFinite(dist[goal.r][goal.c])) return new Set();
+  const steps=[[1,0],[-1,0],[0,1],[0,-1]];
+  const path=new Set();
+  let r=goal.r, c=goal.c;
+  path.add(`${r},${c}`);
+  while (r!==start.r || c!==start.c){
+    for (const [dr,dc] of steps){
+      const nr=r+dr, nc=c+dc;
+      if(nr<0||nc<0||nr>=R||nc>=C) continue;
+      if (dist[nr][nc] === dist[r][c]-1){
+        r=nr; c=nc; path.add(`${r},${c}`); break;
+      }
+    }
+  }
+  return path;
+}
+
+/* Prune: Lösungspfad + viele/längere Decoys + Nebenäste */
+function pruneToSolutionWithDecoys(
+  carve,
+  pathSet,
+  {decoyChance=0.33, decoyMaxLen=8, sideBranchChance=0.35, sideBranchMaxLen=4}={}
+){
+  const R=carve.length, C=carve[0].length;
+  const isPath = (r,c)=> pathSet.has(`${r},${c}`);
+
+  // 1) Alles außer Lösungspfad -> Wand
+  for (let r=0;r<R;r++){
+    for (let c=0;c<C;c++){
+      if (carve[r][c]===PATH && !isPath(r,c)) carve[r][c]=WALL;
+    }
+  }
+
+  // 2) Entlang des Lösungspfads Sackgassen wachsen lassen
+  const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
+  function growLine(sr,sc,dr,dc,maxLen){
+    let pr=sr, pc=sc, len = 1 + Math.floor(Math.random()*maxLen);
+    while (len>0 && pr>0 && pc>0 && pr<R-1 && pc<C-1 && carve[pr][pc]===WALL){
+      carve[pr][pc]=PATH;
+      // Nebenast abzweigen
+      if (sideBranchChance>0 && Math.random()<sideBranchChance){
+        const ortho = (dr===0) ? [[1,0],[-1,0]] : [[0,1],[0,-1]];
+        const [sdr,sdc] = ortho[Math.random()<0.5?0:1];
+        const sr2=pr+sdr, sc2=pc+sdc;
+        if (sr2>0 && sc2>0 && sr2<R-1 && sc2<C-1 && carve[sr2][sc2]===WALL){
+          growLine(sr2, sc2, sdr, sdc, sideBranchMaxLen);
+        }
+      }
+      pr+=dr; pc+=dc; len--;
+    }
+  }
+
+  for (let r=1;r<R-1;r++){
+    for (let c=1;c<C-1;c++){
+      if (!isPath(r,c) || Math.random()>=decoyChance) continue;
+      const shuffled = DIRS.slice().sort(()=>Math.random()-0.5);
+      for (const [dr,dc] of shuffled){
+        const nr=r+dr, nc=c+dc;
+        if (nr<=0||nc<=0||nr>=R-1||nc>=C-1 || carve[nr][nc]!==WALL) continue;
+        growLine(nr,nc,dr,dc,decoyMaxLen);
+        break;
+      }
+    }
+  }
+  return carve;
+}
+
+/* Beste obere Öffnung (größte Distanz zur Mitte) */
+function argmaxTopEntrance(carve, dist){
+  const C=carve[0].length;
+  let bestC= Math.floor(C/2), bestD=-1;
+  for(let c=1;c<C-1;c++){
+    if (carve[1][c]===PATH){
+      const d = dist[1][c];
+      if (Number.isFinite(d) && d>bestD){ bestD=d; bestC=c; }
+    }
+  }
+  return bestC;
+}
+
+/* Big grid mit Wald-Ring + Eingang + Start/Ziel */
 function buildBigGrid(carve, entranceColBig){
   const n=carve.length;
   const big = Array.from({length:n+2},(_,R)=>
     Array.from({length:n+2},(_,C)=>{
       if (R===0||C===0||R===n+1||C===n+1) return FOREST;
-      return carve[R-1][C-1];
+      return carve[R-1][C-1]===WALL ? WALL : PATH;
     })
   );
-  big[0][entranceColBig]=PATH;
   big[1][entranceColBig]=PATH;
+
   const start = { r: 0, c: entranceColBig };
-  return { grid: big, position:start };
+  const g     = { r: Math.floor((n+2)/2), c: Math.floor((n+2)/2) };
+  return { grid: big, position:start, goal:g };
 }
 
-/* Ziel = am weitesten entfernte Zelle vom Start (nur PATH) */
-function computeFarthestGoal(grid, start){
-  const rows=grid.length, cols=grid[0].length;
-  const dist=Array.from({length:rows},()=>Array(cols).fill(-1));
-  const q=[];
-  dist[start.r][start.c]=0;
-  q.push({r:start.r,c:start.c});
-  let best={r:start.r,c:start.c};
-
-  const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
-
-  while(q.length){
-    const {r,c}=q.shift();
-    const d=dist[r][c];
-    if (d>dist[best.r][best.c]) best={r,c};
-    for (const [dr,dc] of DIRS){
-      const nr=r+dr, nc=c+dc;
-      if(nr<0||nc<0||nr>=rows||nc>=cols) continue;
-      if(grid[nr][nc]!==PATH) continue;
-      if(dist[nr][nc]!==-1) continue;
-      dist[nr][nc]=d+1;
-      q.push({r:nr,c:nc});
-    }
-  }
-  return best;
-}
-
-/* ==== Sizing – OHNE ?. und Spread ==== */
+/* ==== Sizing ==== */
 function fitCellSize(onlySize){
-  const vh = window.visualViewport ? window.visualViewport.height : Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-  const vw = window.visualViewport ? window.visualViewport.width  : Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
+  const headerH = document.querySelector('header')?.offsetHeight || 0;
+  const barH    = document.querySelector('.bar')?.offsetHeight    || 0;
+  const controlsH = document.querySelector('.controls')?.offsetHeight || 0;
+  const winH    = document.getElementById('win')?.offsetHeight    || 0;
 
-  const headerEl   = document.querySelector('header');
-  const controlsEl = document.querySelector('.controls');
-  const winEl      = document.getElementById('win');
-
-  const headerH   = headerEl   ? headerEl.offsetHeight   : 0;
-  const controlsH = controlsEl ? controlsEl.offsetHeight : 0;
-  const winH      = winEl      ? winEl.offsetHeight      : 0;
-
-  const barList = document.querySelectorAll('.bar');
-  let bars = 0;
-  for (let i=0;i<barList.length;i++){ bars += barList[i].offsetHeight; }
+  const vw = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
+  const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
   const availW = Math.max(200, vw - 20);
-  const availH = Math.max(200, vh - (headerH + bars + controlsH + winH + 20));
+  const availH = Math.max(200, vh - (headerH + barH + controlsH + winH + 20));
 
   const cols = GRID || parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols')) || 1;
-
   const cellByW = Math.floor(availW / cols) - 1;
   const cellByH = Math.floor(availH / cols) - 1;
 
-  const cell = Math.max(8, Math.min(22, Math.min(cellByW, cellByH)));
+  const cell = Math.max(10, Math.min(22, Math.min(cellByW, cellByH)));
   const gap  = cell < 16 ? 1 : 2;
 
   document.documentElement.style.setProperty('--cell', cell + 'px');
   document.documentElement.style.setProperty('--gap',  gap  + 'px');
-
-  frameEl.style.maxHeight = 'none';
+  frameEl.style.maxHeight = Math.max(160, availH) + 'px';
 
   if (!onlySize && GRID){ draw(); }
 }
 
-/* ==== Sichtbarkeit / Render ==== */
+/* ==== Render ==== */
 function draw(){
   const { seenEver, fringeNow } = computeVisibilityStates();
   mazeEl.innerHTML = '';
@@ -400,6 +483,7 @@ function draw(){
       const cell = document.createElement('div');
       const v = grid[r][c];
 
+      // Grundtyp
       if (r===goal.r && c===goal.c){
         cell.className = 'cell goal';
         if (goalImageURL){
@@ -407,11 +491,18 @@ function draw(){
           s.className = 'goal-sprite';
           s.style.backgroundImage = `url('${goalImageURL}')`;
           cell.appendChild(s);
-        } else { cell.classList.add('fallback'); }
-      } else if (v===WALL) { cell.className = 'cell wall';
-      } else if (v===FOREST) { cell.className = 'cell forest';
-      } else { cell.className = 'cell path'; }
+        } else {
+          cell.classList.add('fallback');
+        }
+      } else if (v===WALL) {
+        cell.className = 'cell wall';
+      } else if (v===FOREST) {
+        cell.className = 'cell forest';
+      } else {
+        cell.className = 'cell path';
+      }
 
+      // Spieler
       if (r===position.r && c===position.c){
         const s = document.createElement('div');
         if (playerImageURL){ s.className = 'sprite'; s.style.backgroundImage = `url('${playerImageURL}')`; }
@@ -420,11 +511,16 @@ function draw(){
         cell.classList.add('player'); cell.tabIndex = 0; cell.appendChild(s);
       }
 
+      // Fog-Logik:
+      // - lampOn (Sichtfeld AN) => ALLES sichtbar, keine Dim-/Fog-Klassen
+      // - lampOff (Sichtfeld AUS) => Fog aktiv mit grauem Sichtkegel
       if (!lampOn){
         if (!seenEver[r][c]) {
-          if (v !== FOREST) cell.classList.add('fog');
+          if (v !== FOREST) cell.classList.add('fog'); // Forest NIE verdunkeln
         } else if (fringeNow[r][c]) {
-          if (v===PATH || (r===goal.r && c===goal.c)){ cell.classList.add('dim'); }
+          if (v===PATH || (r===goal.r && c===goal.c)){
+            cell.classList.add('dim');
+          }
         }
       }
 
@@ -439,11 +535,13 @@ function computeVisibilityStates(){
   const seenEver = Array.from({length:GRID},()=>Array(GRID).fill(false));
   const fringeNow = Array.from({length:GRID},()=>Array(GRID).fill(false));
 
+  // lampOn: alles sichtbar
   if (lampOn){
     for (let r=0;r<GRID;r++) for (let c=0;c<GRID;c++) seenEver[r][c]=true;
     return { seenEver, fringeNow };
   }
 
+  // bereits besuchte Felder sind "gesehen"
   if (visited){
     for (const key of visited){
       const [r,c] = key.split(',').map(Number);
@@ -451,6 +549,7 @@ function computeVisibilityStates(){
     }
   }
 
+  // Sichtkegel
   const R = position.r, C = position.c;
   for (let r=R-FOG_RADIUS; r<=R+FOG_RADIUS; r++){
     for (let c=C-FOG_RADIUS; c<=C+FOG_RADIUS; c++){
@@ -465,47 +564,9 @@ function computeVisibilityStates(){
   return { seenEver, fringeNow };
 }
 
-/* WICHTIG: kein focus(options) – nur klassisch, damit nichts abstürzt */
 function focusPlayer(){
   const p = mazeEl.querySelector('.player');
-  if (p && p.focus){
-    try { p.focus(); } catch(e){}
-  }
-}
-
-/* ==== Party ==== */
-let partyTimeout;
-function showParty(){
-  partyMsg.innerHTML = "🎉 Geschafft! Nikolaus hat das Haus gefunden. Merke dir den Buchstaben: <strong>N</strong> 🎉";
-  partyEl.classList.add('show');
-  spawnConfetti(140);
-  clearTimeout(partyTimeout);
-  partyTimeout = setTimeout(hideParty, 4500);
-}
-function hideParty(){
-  partyEl.classList.remove('show');
-  confettiEl.innerHTML = '';
-}
-function spawnConfetti(n=120){
-  confettiEl.innerHTML = '';
-  const colors = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#22c55e','#eab308'];
-  const vw = window.innerWidth;
-  for (let i=0;i<n;i++){
-    const d = document.createElement('div');
-    d.className = 'piece';
-    d.style.background = colors[i % colors.length];
-    const startX = Math.random()*vw;
-    const endX   = startX + (Math.random()*200 - 100);
-    d.style.left = startX + 'px';
-    d.style.setProperty('--sx', '0px');
-    d.style.setProperty('--ex', (endX - startX) + 'px');
-    d.style.animationDuration = (2500 + Math.random()*1200) + 'ms';
-    d.style.animationDelay = (Math.random()*200) + 'ms';
-    const w = 8 + Math.random()*8, h = 10 + Math.random()*18;
-    d.style.width = w + 'px'; d.style.height = h + 'px';
-    d.style.transform = `translate(0,-10vh) rotate(${Math.random()*60-30}deg)`;
-    confettiEl.appendChild(d);
-  }
+  if (p) p.focus({preventScroll:true});
 }
 
 /* Bewegung & Win */
@@ -520,7 +581,6 @@ function move(dr,dc){
     document.getElementById('win').style.display='block';
     document.getElementById('letter').textContent='N';
     detachControls();
-    showParty();
   }
 }
 
@@ -533,11 +593,14 @@ function keyHandler(e){
   else if(['arrowright','d'].includes(k)) move(0,1);
 }
 
-/* Touch – horizontale Wischgeste bewegt die Figur */
+/* Touch – vertikales Scrollen zulassen; horizontale Wischgeste bewegt die Figur */
 let sx=0, sy=0, st=0;
 const SWIPE_MIN=22, SWIPE_MAXT=600;
-function onTouchStart(e){ if (!e.touches || e.touches.length!==1) return; sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now(); }
-function onTouchMove(e){ /* pan-y erlaubt */ }
+function onTouchStart(e){
+  if (!e.touches || e.touches.length!==1) return;
+  sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now();
+}
+function onTouchMove(e){ /* kein preventDefault -> pan-y erlaubt */ }
 function onTouchEnd(e){
   const dt=Date.now()-st; if(dt>SWIPE_MAXT) return;
   const t=e.changedTouches && e.changedTouches[0]; if(!t) return;
@@ -545,7 +608,7 @@ function onTouchEnd(e){
   if (Math.max(Math.abs(dx),Math.abs(dy))<SWIPE_MIN) return;
   if (Math.abs(dx)>Math.abs(dy)){
     if (dx>0) move(0, 1); else move(0, -1);
-    e.preventDefault();
+    e.preventDefault(); // nur horizontales Wischen blockt Scrollen
   }
 }
 
@@ -569,6 +632,7 @@ function detachControls(){
 </script>
 </body>
 </html>
+
 
 
 
