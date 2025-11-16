@@ -150,11 +150,11 @@
 
 <main class="wrap">
   <div class="bar">
-    
+    <button id="regen">Neu starten</button>
   </div>
 
   <div class="frame" id="frame">
-    <div id="maze" class="maze" aria-label="Labyrinth" role="grid" tabindex="0"></div> <br> <br> 
+    <div id="maze" class="maze" aria-label="Labyrinth" role="grid" tabindex="0"></div>
 
     <!-- Hinweis + Taschenlampe jetzt im selben Frame -->
     <p class="hint">Falls es zu schwer ist, dann ist hier eine Taschenlampe:</p>
@@ -238,7 +238,7 @@ const GOAL_INNER      = { r: 13, c: 13 };
 let GRID = 0;
 let grid, position, goal;
 let lampOn = false;
-const FOG_RADIUS = 1;
+const FOG_RADIUS = 2;
 let visited;
 
 const mazeEl   = document.getElementById('maze');
