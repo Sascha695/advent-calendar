@@ -6,6 +6,12 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui; }
 
+    /* WICHTIG: Scrollen komplett deaktivieren */
+    html, body {
+      height: 100%;
+      overflow: hidden;         /* keine Scrollbars, kein Scrollen */
+    }
+
     body {
       min-height: 100vh;
       display: flex;
@@ -16,6 +22,7 @@
       padding: 20px 10px;
       gap: 20px;
       overflow-x: hidden;
+      overscroll-behavior: none; /* verhindert "Gummiband"-Scroll z.B. auf iOS */
     }
 
     header h1 { font-size: 1.8rem; text-align: center; }
@@ -49,7 +56,7 @@
       background-image: url("assets/noel_scene.png");
       background-size: cover;
       background-position: center;
-      touch-action: none;
+      touch-action: none; /* hier auch kein Scroll-Gesten */
     }
 
     .target-number {
@@ -90,7 +97,7 @@
       background: #fff;
       color: #000;
       cursor: grab;
-      touch-action: none;
+      touch-action: none; /* Drag statt Scroll auf den Karten */
       font-size: 0.95rem;
     }
 
@@ -197,7 +204,6 @@
     </section>
   </main>
 
-  
   <!-- PARTY-OVERLAY -->
   <div id="partyOverlay">
     <div id="partyBox">
@@ -284,7 +290,7 @@
         card.textContent = w.label;
         card.dataset.wordId = w.id;
 
-        card.addEventListener("pointerdown", (e) => startDrag(e, card));
+        card.addEventListener("pointerdown", (e) => startDrag(e, card), { passive: false });
         wordListEl.appendChild(card);
       });
     }
@@ -293,6 +299,8 @@
 
     function startDrag(e, card) {
       if (card.classList.contains("used")) return;
+
+      e.preventDefault(); // verhindert Scrollstart
 
       draggingCard = card;
 
@@ -315,6 +323,8 @@
 
     function onPointerMove(e) {
       if (!dragClone) return;
+      e.preventDefault(); // verhindert Scrollen während des Ziehens
+
       dragClone.style.left = (e.clientX - dragOffsetX) + "px";
       dragClone.style.top  = (e.clientY - dragOffsetY) + "px";
     }
@@ -323,6 +333,8 @@
 
     function onPointerUp(e) {
       if (!draggingCard) return;
+
+      e.preventDefault(); // sicherheitshalber
 
       if (dragClone) dragClone.remove();
 
@@ -428,9 +440,9 @@
 
     /* ========= EVENT-LISTENER ========= */
 
-    document.addEventListener("pointermove", onPointerMove);
-    document.addEventListener("pointerup", onPointerUp);
-    document.addEventListener("pointercancel", onPointerUp);
+    document.addEventListener("pointermove", onPointerMove, { passive: false });
+    document.addEventListener("pointerup", onPointerUp, { passive: false });
+    document.addEventListener("pointercancel", onPointerUp, { passive: false });
 
     initTargets();
     initWords();
