@@ -4,240 +4,144 @@
   <meta charset="utf-8">
   <title>Día 10 – Juego del Papá Noel</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui; }
 
     body {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
       background: #0b1320;
       color: #fff;
-      padding: 20px;
+      padding: 20px 10px;
       gap: 20px;
     }
 
-    header h1 {
-      font-size: 1.8rem;
-      text-align: center;
-      margin-bottom: 10px;
-    }
+    header h1 { font-size: 1.8rem; text-align: center; }
 
     .instructions {
       max-width: 800px;
       text-align: center;
       font-size: 1rem;
       background: rgba(0,0,0,0.3);
-      padding: 10px 15px;
+      padding: 10px;
       border-radius: 10px;
     }
 
     .game-layout {
       display: flex;
       flex-wrap: wrap;
-      gap: 20px;
+      gap: 16px;
       justify-content: center;
-      align-items: flex-start;
       width: 100%;
       max-width: 1100px;
     }
 
-    /* CONTAINER FÜR DAS BILD MIT DEN ZAHLEN */
+    /* BILD-CONTAINER */
     .image-container {
       position: relative;
       width: 600px;
-      max-width: 90vw;
-      aspect-ratio: 3 / 4; /* anpassen, wenn dein Bild ein anderes Format hat */
+      max-width: 100%;
+      aspect-ratio: 3 / 4;
       border-radius: 15px;
       overflow: hidden;
       border: 2px solid rgba(255,255,255,0.3);
+      background-image: url("noel_scene.png"); /* <- hier dein Bild */
       background-size: cover;
       background-position: center;
-      background-repeat: no-repeat;
-      /* HIER DEN PFAD ZU DEINEM HINTERGRUNDBILD ANPASSEN */
-      background-image: url("assets/noel_scene.png");
+      touch-action: none;
     }
 
-    /* ZAHLEN AUF DEM BILD (DROP-ZIELE) */
+    /* ZAHLEN */
     .target-number {
       position: absolute;
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
+      background: rgba(255,255,255,0.9);
+      color: #c0182b;
+      border: 2px solid #c0182b;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
+      transform: translate(-50%, -50%);
       user-select: none;
-      background: rgba(255, 255, 255, 0.85);
-      color: #c0182b;
-      border: 2px solid #c0182b;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
     }
 
     .target-number.correct {
       background: #1f9152;
       color: #fff;
       border-color: #1f9152;
-      box-shadow: 0 0 10px rgba(0,0,0,0.6);
-      cursor: default;
     }
 
-    .target-number.wrong {
-      animation: shake 0.2s;
-    }
-
-    @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-3px); }
-      50% { transform: translateX(3px); }
-      75% { transform: translateX(-3px); }
-      100% { transform: translateX(0); }
-    }
-
-    /* LISTE MIT WÖRTERN (ZUM HINZIEHEN) */
+    /* Wortkarten */
     .word-list {
-      flex: 1;
       min-width: 240px;
-      max-width: 320px;
+      max-width: 360px;
       background: rgba(0,0,0,0.25);
       padding: 12px;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.2);
     }
 
-    .word-list h2 {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    .words {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-    }
+    .words { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 
     .word-card {
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #ffffff;
-      color: #1b1b1b;
-      font-size: 0.95rem;
+      padding: 8px 12px;
+      border-radius: 20px;
+      background: #fff;
+      color: #000;
       cursor: grab;
-      user-select: none;
-      border: 1px solid rgba(0,0,0,0.15);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    }
-
-    .word-card:active {
-      cursor: grabbing;
-    }
-
-    .word-card.used {
-      opacity: 0.4;
-      cursor: default;
-    }
-
-    .feedback {
-      margin-top: 10px;
-      min-height: 1.2em;
-      text-align: center;
+      touch-action: none;
       font-size: 0.95rem;
     }
 
-    .feedback.ok {
-      color: #7CFFA5;
-    }
+    .word-card.used { opacity: 0.4; cursor: default; }
 
-    .feedback.bad {
-      color: #ff8c8c;
-    }
-
-    footer {
-      margin-top: 10px;
-      font-size: 0.85rem;
-      opacity: 0.8;
-    }
-
-    .status {
-      margin-top: 8px;
+    /* Wort, das auf die richtige Stelle gesetzt wird */
+    .placed-word {
+      position: absolute;
+      background: rgba(255,255,255,0.95);
+      color: #000;
+      padding: 4px 10px;
+      border-radius: 12px;
       font-size: 0.9rem;
-      text-align: center;
+      transform: translate(-50%, -70%);
+      pointer-events: none;
+      white-space: nowrap;
     }
 
-    .status span {
-      font-weight: 600;
-    }
+    .feedback { text-align: center; min-height: 1.2em; }
+    .feedback.ok { color: #7cff9b; }
+    .feedback.bad { color: #ff8c8c; }
 
-    @media (max-width: 768px) {
-      header h1 {
-        font-size: 1.4rem;
-      }
-      .instructions {
-        font-size: 0.95rem;
-      }
-    }
+    footer { opacity: 0.7; text-align: center; font-size: 0.85rem; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Día 10 – Palabras de Papá Noel</h1>
-  </header>
+  <header><h1>Día 10 – Palabras de Papá Noel</h1></header>
 
   <div class="instructions">
-    <p>
-      Mira la imagen. Hay números del <strong>1</strong> al <strong>10</strong> sobre Papá Noel y las cosas de Navidad.
-      Arrastra cada palabra en español al número correcto.
-    </p>
-    <p style="margin-top:6px;">
-      Español fácil: <strong>el gorro</strong>, <strong>la barba</strong>, <strong>el trineo</strong>, <strong>los regalos</strong>, etc.
-    </p>
+    Mira la imagen y arrastra cada palabra al número correcto.
   </div>
 
   <main class="game-layout">
-    <!-- CONTAINER MIT BILD UND ZAHLEN -->
-    <section class="image-container" id="imageContainer">
-      <!-- Die Zahlen werden per JavaScript nach den X/Y-Koordinaten erzeugt -->
-    </section>
+    <section class="image-container" id="imageContainer"></section>
 
-    <!-- LISTE MIT SPANISCHEN WÖRTERN -->
     <section class="word-list">
-      <h2>Palabras – Arrastra al número</h2>
-      <div class="words" id="wordList">
-        <!-- Wortkärtchen werden per JavaScript erstellt -->
-      </div>
+      <h2>Palabras</h2>
+      <div class="words" id="wordList"></div>
       <div class="feedback" id="feedback"></div>
       <div class="status" id="status"></div>
     </section>
   </main>
 
-  <footer>
-    <p>Consejo: Puedes repetir el juego. Es una práctica para vocabulario de Navidad en español.</p>
-  </footer>
+  <footer>Consejo: Puedes repetir el juego.</footer>
 
   <script>
-    /* 
-      ===== EINFACHE KONFIGURATION =====
+    /* ========= KONFIGURATION ========= */
 
-      1. Hintergrundbild:
-         Im CSS oben in .image-container die Zeile
-         background-image: url("santa-fondo.jpg");
-         auf deinen eigenen Bildnamen ändern.
-
-      2. Spanische Wörter hier anpassen.
-         - id: interner Name, wird mit den Zielen (Zahlen) verknüpft
-         - label: Text, den der Schüler sieht (Spanisch bleibt!)
-    */
+    // Spanische Wörter
     const words = [
       { id: "gorro",      label: "el gorro" },
       { id: "barba",      label: "la barba" },
@@ -251,130 +155,154 @@
       { id: "nariz",      label: "la nariz" }
     ];
 
-    /*
-      3. Position der Zahlen (Drop-Ziele) auf dem Bild.
-         - number: sichtbare Zahl (1–10)
-         - x, y: Position in Prozent (%) innerhalb des Bild-Containers
-         - correctWordId: muss zu einem id aus "words" oben passen
-
-         Beispiel:
-         { number: 1, x: 50, y: 10, correctWordId: "gorro" }
-         => Zahl 1 ist oben in der Mitte, richtige Lösung "el gorro".
-    */
+    // Zahlenpositionen
     const targetsConfig = [
-      { number: 1, x: 50, y: 8,  correctWordId: "gorro" },     // oben an der Mütze
-      { number: 2, x: 50, y: 22, correctWordId: "barba" },     // Bart
-      { number: 3, x: 60, y: 28, correctWordId: "nariz" },     // Nase
-      { number: 4, x: 68, y: 40, correctWordId: "guantes" },   // Handschuhe
-      { number: 5, x: 50, y: 55, correctWordId: "cinturon" },  // Gürtel
-      { number: 6, x: 50, y: 70, correctWordId: "saco" },      // Sack
-      { number: 7, x: 30, y: 82, correctWordId: "botas" },     // Stiefel
-      { number: 8, x: 85, y: 65, correctWordId: "regalos" },   // Geschenke
-      { number: 9, x: 15, y: 65, correctWordId: "trineo" },    // Schlitten
-      { number: 10, x: 10, y: 30, correctWordId: "renos" }     // Rentiere
+      { number: 1, x: 50, y: 8,  correctWordId: "gorro" },
+      { number: 2, x: 50, y: 22, correctWordId: "barba" },
+      { number: 3, x: 60, y: 28, correctWordId: "nariz" },
+      { number: 4, x: 68, y: 40, correctWordId: "guantes" },
+      { number: 5, x: 50, y: 55, correctWordId: "cinturon" },
+      { number: 6, x: 50, y: 70, correctWordId: "saco" },
+      { number: 7, x: 30, y: 82, correctWordId: "botas" },
+      { number: 8, x: 85, y: 65, correctWordId: "regalos" },
+      { number: 9, x: 15, y: 65, correctWordId: "trineo" },
+      { number: 10, x: 10, y: 30, correctWordId: "renos" }
     ];
 
-    /* ===== SPIEL-LOGIK ===== */
+    /* ========= SPIELVARIABLEN ========= */
+
     const imageContainer = document.getElementById("imageContainer");
     const wordListEl = document.getElementById("wordList");
     const feedbackEl = document.getElementById("feedback");
     const statusEl = document.getElementById("status");
 
     let correctCount = 0;
+    let draggingCard = null;
+    let dragClone = null;
 
-    // Ziele (Zahlen) auf dem Bild erzeugen
+    /* ========= ZIELE ERZEUGEN ========= */
+
     function initTargets() {
       targetsConfig.forEach(cfg => {
-        const target = document.createElement("div");
-        target.className = "target-number";
-        target.textContent = cfg.number;
-        target.style.left = cfg.x + "%";
-        target.style.top = cfg.y + "%";
-        target.style.transform = "translate(-50%, -50%)";
-        target.dataset.correctWordId = cfg.correctWordId;
-        target.dataset.number = cfg.number;
-
-        // Drop-Events für Drag & Drop
-        target.addEventListener("dragover", (e) => {
-          e.preventDefault();
-        });
-        target.addEventListener("drop", handleDropOnTarget);
-
-        imageContainer.appendChild(target);
+        const t = document.createElement("div");
+        t.className = "target-number";
+        t.style.left = cfg.x + "%";
+        t.style.top = cfg.y + "%";
+        t.textContent = cfg.number;
+        t.dataset.correctWordId = cfg.correctWordId;
+        t.dataset.number = cfg.number;
+        imageContainer.appendChild(t);
       });
     }
 
-    // Wortkärtchen in der Liste erzeugen
+    /* ========= WORTKÄRTCHEN ERZEUGEN ========= */
+
     function initWords() {
-      words.forEach(word => {
+      words.forEach(w => {
         const card = document.createElement("div");
         card.className = "word-card";
-        card.textContent = word.label;
-        card.draggable = true;
-        card.dataset.wordId = word.id;
+        card.textContent = w.label;
+        card.dataset.wordId = w.id;
 
-        card.addEventListener("dragstart", (e) => {
-          // wir speichern nur die Wort-ID im Drag-Event
-          e.dataTransfer.setData("text/plain", word.id);
-        });
-
+        card.addEventListener("pointerdown", (e) => startDrag(e, card));
         wordListEl.appendChild(card);
       });
     }
 
-    // Wenn ein Wort auf eine Zahl gezogen wird
-    function handleDropOnTarget(e) {
-      e.preventDefault();
-      const droppedWordId = e.dataTransfer.getData("text/plain");
-      const target = e.currentTarget;
-      const correctWordId = target.dataset.correctWordId;
+    /* ========= DRAG START ========= */
 
-      if (!droppedWordId) return;
+    function startDrag(e, card) {
+      if (card.classList.contains("used")) return;
 
-      // passende Wortkarte im DOM finden
-      const wordCard = document.querySelector(
-        `.word-card[data-word-id="${CSS.escape(droppedWordId)}"]`
-      );
+      draggingCard = card;
 
-      // wenn es die Karte nicht gibt oder schon benutzt ist, nichts machen
-      if (!wordCard || wordCard.classList.contains("used")) {
+      // "Ghost"-Kopie erzeugen
+      dragClone = card.cloneNode(true);
+      dragClone.style.position = "fixed";
+      dragClone.style.left = e.clientX + "px";
+      dragClone.style.top = e.clientY + "px";
+      dragClone.style.transform = "translate(-50%, -50%)";
+      dragClone.style.opacity = "0.9";
+      dragClone.style.zIndex = "9999";
+      dragClone.style.pointerEvents = "none";
+
+      document.body.appendChild(dragClone);
+    }
+
+    /* ========= DRAG BEWEGEN ========= */
+
+    function onPointerMove(e) {
+      if (!dragClone) return;
+      dragClone.style.left = e.clientX + "px";
+      dragClone.style.top = e.clientY + "px";
+    }
+
+    /* ========= DRAG LOSLASSEN ========= */
+
+    function onPointerUp(e) {
+      if (!draggingCard) return;
+
+      if (dragClone) dragClone.remove();
+
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const target = el ? el.closest(".target-number") : null;
+
+      if (target) dropOnTarget(draggingCard, target);
+
+      draggingCard = null;
+      dragClone = null;
+    }
+
+    /* ========= DROP-LOGIK ========= */
+
+    function dropOnTarget(wordCard, target) {
+      const correctId = target.dataset.correctWordId;
+      const droppedId = wordCard.dataset.wordId;
+
+      if (correctId !== droppedId) {
+        feedbackEl.textContent = "No. Intenta otra vez.";
+        feedbackEl.className = "feedback bad";
         return;
       }
 
-      // Überprüfung: stimmt das Wort mit dem Ziel überein?
-      if (droppedWordId === correctWordId) {
-        target.classList.remove("wrong");
-        target.classList.add("correct");
-        target.textContent = target.dataset.number; // Zahl bleibt sichtbar
-        wordCard.classList.add("used");
-        wordCard.draggable = false;
+      /* ========== RICHTIG! Wort soll an der Zielposition stehen bleiben ========== */
 
-        correctCount++;
-        feedbackEl.textContent = "¡Muy bien! Palabra correcta.";
-        feedbackEl.classList.remove("bad");
-        feedbackEl.classList.add("ok");
+      target.classList.add("correct");
+      wordCard.classList.add("used");
 
-        updateStatus();
+      // Wort an Zielposition anzeigen
+      const placed = document.createElement("div");
+      placed.className = "placed-word";
+      placed.textContent = wordCard.textContent;
 
-      } else {
-        // kleine Fehler-Animation
-        target.classList.add("wrong");
-        setTimeout(() => target.classList.remove("wrong"), 300);
-        feedbackEl.textContent = "No. Intenta otra vez.";
-        feedbackEl.classList.remove("ok");
-        feedbackEl.classList.add("bad");
-      }
+      // Position über der Zahl
+      placed.style.left = target.style.left;
+      placed.style.top = target.style.top;
+
+      imageContainer.appendChild(placed);
+
+      feedbackEl.textContent = "¡Muy bien!";
+      feedbackEl.className = "feedback ok";
+
+      correctCount++;
+      updateStatus();
     }
 
-    // Statusanzeige (wie viele richtig?)
+    /* ========= STATUS ========= */
+
     function updateStatus() {
       statusEl.textContent = `Correctos: ${correctCount} / ${targetsConfig.length}`;
+
       if (correctCount === targetsConfig.length) {
-        statusEl.innerHTML = `<span>¡Perfecto!</span> Has completado todas las palabras.`;
+        statusEl.innerHTML = `<span>¡Perfecto! Juego completo.</span>`;
       }
     }
 
-    // Spiel starten
+    /* ========= EVENT-LISTENER ========= */
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+
     initTargets();
     initWords();
     updateStatus();
