@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Tag 7: Wortsuppe</title>
+  <title>Day 7: Word Soup</title>
   <style>
     :root{ --accent:#c54c3d; --found:#12884b; }
     :root{
@@ -212,11 +212,9 @@ main{
   <!-- 🌟 Story richtig im BODY platziert -->
   <section class="card" style="max-width:800px; margin:1rem auto; text-align:center; background:rgba(255,255,255,.9);">
     <p style="font-size:1.1rem; line-height:1.5; margin:1rem;">
-      In der Weihnachtswerkstatt duftet es herrlich nach Suppe –
-      <strong>Frau Weihnachtsmann</strong> hat eine große Portion <strong>Buchstabensuppe</strong> gekocht,
-      damit der Weihnachtsmann bei Kräften bleibt. Doch oje! Beim Umrühren sind plötzlich lauter
-      <strong>Weihnachtswörter</strong> in der Suppe aufgetaucht – und nun kann der Weihnachtsmann sie nicht mehr alle finden!
-      <br><br>
+In Santa’s Christmas workshop, the delicious smell of soup is in the air –
+Mrs. Santa Claus has cooked a big pot of alphabet soup so that Santa can keep up his strength.
+But oh dear! While stirring, a bunch of Christmas words suddenly appeared in the soup – and now Santa can’t find them all anymore!
       <em>Hilf ihm, die versteckten Wörter zu entdecken, bevor die Suppe kalt wird! 🍲🎄</em>
     </p>
   </section>
@@ -224,15 +222,15 @@ main{
   <main>
     <div class="wrap">
       <section class="card">
-        <div id="grid" class="grid" aria-label="Wortsuppe"></div>
+        <div id="grid" class="grid" aria-label="Word soup"></div>
       </section>
 
       <section class="card pics">
-        <h2>Finde diese Bilder im Gitter</h2>
-        <div class="hint">Nur <b>von links nach rechts</b> und <b>von oben nach unten</b> wischen.</div>
+        <h2>Find all of those pictures</h2>
+        <div class="hint"Just wipe<b>from left to right</b> and <b>from top to bottom</b>.</div>
         <div id="picGrid" class="picgrid"></div>
         <div class="bar">
-          <button class="btn" id="resetBtn">Neu mischen</button>
+          <button class="btn" id="resetBtn">Mix New</button>
           <span class="msg" id="statusMsg"></span>
         </div>
       </section>
@@ -242,18 +240,18 @@ main{
   <script>
   /* ==== dein JS inkl. Touch-Snap-Logik (unverändert aus deiner Nachricht) ==== */
   const IMAGES = [
-    { word:"GESCHENK", src:"assets/gift.png"},
-    { word:"DREIKOENIGE", src:"assets/drei_koenige.png"},
+    { word:"PRESENT", src:"assets/gift.png"},
+    { word:"THREEKINGS", src:"assets/drei_koenige.png"},
     { word:"NIKOLAUS", src:"assets/nikolaus.png"},
-    { word:"RENTIER", src:"assets/reindeer.png"},
-    { word:"SCHLITTEN", src:"assets/schlitten.png"},
-    { word:"KERZE", src:"assets/candle.png"},
-    { word:"TANNENBAUM", src:"assets/tree2.png"},
-    { word:"KRIPPE", src:"assets/krippe.png"},
-    { word:"STERN", src:"assets/stern.png"},
-    { word:"KEKSE", src:"assets/kekse.png"},
-    { word:"GLOCKEN", src:"assets/glocken.png"},
-    { word:"SCHNEEMANN", src:"assets/snowman2.png"}
+    { word:"REINDEER", src:"assets/reindeer.png"},
+    { word:"SLEDGE", src:"assets/schlitten.png"},
+    { word:"CANDLE", src:"assets/candle.png"},
+    { word:"CHRISTMASTREE", src:"assets/tree2.png"},
+    { word:"CRIB", src:"assets/krippe.png"},
+    { word:"STAR", src:"assets/stern.png"},
+    { word:"COOKIES", src:"assets/kekse.png"},
+    { word:"BELLS", src:"assets/glocken.png"},
+    { word:"SNOWMAN", src:"assets/snowman2.png"}
   ];
   const WORDS = IMAGES.map(i=>i.word);
   const SIZE = 15;
@@ -484,7 +482,7 @@ main{
     axis=null; // Reset für nächsten Zug
     gridEl.releasePointerCapture(activePointerId);
     if(foundWords.size===IMAGES.length){
-      statusMsg.textContent='🎉 Juhuuu, du hast alle Bilder gefunden! Gut gemacht! Dein heutiger Buchstabe ist W';
+      statusMsg.textContent='🎉 HEUREKA, you found all the words. Congratulations! Today's letter is: W';
       startLetterConfetti();
     }
   }
