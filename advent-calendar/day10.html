@@ -15,6 +15,7 @@
       color: #fff;
       padding: 20px 10px;
       gap: 20px;
+      overflow-x: hidden;
     }
 
     header h1 { font-size: 1.8rem; text-align: center; }
@@ -37,7 +38,6 @@
       max-width: 1100px;
     }
 
-    /* BILD-CONTAINER */
     .image-container {
       position: relative;
       width: 600px;
@@ -46,13 +46,12 @@
       border-radius: 15px;
       overflow: hidden;
       border: 2px solid rgba(255,255,255,0.3);
-      background-image: url("assets/noel_scene.png"); /* <- hier dein Bild */
+      background-image: url("assets/noel_scene.png");
       background-size: cover;
       background-position: center;
       touch-action: none;
     }
 
-    /* ZAHLEN */
     .target-number {
       position: absolute;
       width: 40px;
@@ -75,7 +74,6 @@
       border-color: #1f9152;
     }
 
-    /* Wortkarten */
     .word-list {
       min-width: 240px;
       max-width: 360px;
@@ -98,7 +96,6 @@
 
     .word-card.used { opacity: 0.4; cursor: default; }
 
-    /* Wort, das auf die richtige Stelle gesetzt wird */
     .placed-word {
       position: absolute;
       background: rgba(255,255,255,0.95);
@@ -115,7 +112,71 @@
     .feedback.ok { color: #7cff9b; }
     .feedback.bad { color: #ff8c8c; }
 
+    .status { text-align: center; margin-top: 6px; }
+
     footer { opacity: 0.7; text-align: center; font-size: 0.85rem; }
+
+    /* PARTY-OVERLAY IN DER MITTE DES BILDSCHIRMS */
+    #partyOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;           /* wird per JS auf block gesetzt */
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #partyBox {
+      background: rgba(255,255,255,0.96);
+      color: #111;
+      padding: 20px 25px;
+      border-radius: 16px;
+      max-width: 420px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    #partyBox h2 {
+      margin-bottom: 10px;
+      font-size: 1.4rem;
+    }
+
+    #partyBox p {
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    #partyBox .letter {
+      margin-top: 8px;
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    /* KONFETTI */
+    .confetti {
+      position: fixed;
+      top: -10px;
+      width: 8px;
+      height: 14px;
+      border-radius: 2px;
+      opacity: 0.9;
+      z-index: 9999;
+      pointer-events: none;
+      animation-name: confetti-fall;
+      animation-timing-function: linear;
+      animation-iteration-count: 1;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translate3d(0, -100px, 0) rotateZ(0deg);
+      }
+      100% {
+        transform: translate3d(0, 110vh, 0) rotateZ(360deg);
+      }
+    }
   </style>
 </head>
 <body>
@@ -138,35 +199,51 @@
 
   <footer>Consejo: Puedes repetir el juego.</footer>
 
-  <script>
-    /* ========= KONFIGURATION ========= */
+  <!-- PARTY-OVERLAY -->
+  <div id="partyOverlay">
+    <div id="partyBox">
+      <h2>¡Felicidades!</h2>
+      <p>Has colocado todas las palabras correctamente.</p>
+      <p>De ti se puede aprender mucho.</p>
+      <p class="letter">Tu letra de hoy es: <strong>L</strong></p>
+    </div>
+  </div>
 
-    // Spanische Wörter
+  <script>
+    /* ========= SPANISCHE WÖRTER (13) ========= */
+
     const words = [
-      { id: "Papá Noel",      label: "Papá Noel" },
-      { id: "el ángel",      label: "el ángel" },
-      { id: "la chimenea",       label: "la chimenea" },
-      { id: "el árbol de Navidad",   label: "el árbol de Navidad" },
-      { id: "el regalo navideño",    label: "el regalo navideño" },
-      { id: "la bola de Navidad",     label: "la bola de Navidad" },
-      { id: "la tarjeta de Navidad",      label: "la tarjeta de Navidad" },
-      { id: "el cascanueces",      label: "el cascanueces" },
-      { id: "la iluminación",    label: "la iluminación" },
-      { id: "la corona de Navidad",      label: "la corona de Navidad" }
+      { id: "Papá Noel",            label: "Papá Noel" },
+      { id: "el ángel",             label: "el ángel" },
+      { id: "la chimenea",          label: "la chimenea" },
+      { id: "el árbol de Navidad",  label: "el árbol de Navidad" },
+      { id: "el regalo navideño",   label: "el regalo navideño" },
+      { id: "la bola de Navidad",   label: "la bola de Navidad" },
+      { id: "la tarjeta de Navidad",label: "la tarjeta de Navidad" },
+      { id: "el cascanueces",       label: "el cascanueces" },
+      { id: "la iluminación",       label: "la iluminación" },
+      { id: "la corona de Navidad", label: "la corona de Navidad" },
+      { id: "la vela",              label: "la vela" },          // Kerze
+      { id: "los calcetines",       label: "los calcetines" },   // Socken
+      { id: "el gato",              label: "el gato" }           // Katze
     ];
 
-    // Zahlenpositionen x= links rechts y= hoch runter
+    /* ========= ZAHLEN / POSITIONEN ========= */
+
     const targetsConfig = [
-      { number: 1, x: 8,  y: 90,  correctWordId: "Papá Noel" },
-      { number: 2, x: 55, y: 22, correctWordId: "el ángel" },
-      { number: 3, x: 89, y: 20, correctWordId: "la corona de Navidad" },
-      { number: 4, x: 63, y: 65, correctWordId: "la iluminación" },
-      { number: 5, x: 60, y: 57, correctWordId: "el árbol de Navidad" },
-      { number: 6, x: 10, y: 30, correctWordId: "la chimenea" },
-      { number: 7, x: 91, y: 60, correctWordId: "el cascanueces" },
-      { number: 8, x: 45, y: 75, correctWordId: "el regalo navideño" },
-      { number: 9, x: 64, y: 35, correctWordId: "la bola de Navidad" },
-      { number: 10, x: 30, y: 10, correctWordId: "la tarjeta de Navidad" }
+      { number: 1,  x: 8,  y: 90, correctWordId: "Papá Noel" },
+      { number: 2,  x: 55, y: 22, correctWordId: "el ángel" },
+      { number: 3,  x: 89, y: 20, correctWordId: "la corona de Navidad" },
+      { number: 4,  x: 63, y: 65, correctWordId: "la iluminación" },
+      { number: 5,  x: 60, y: 57, correctWordId: "el árbol de Navidad" },
+      { number: 6,  x: 10, y: 30, correctWordId: "la chimenea" },
+      { number: 7,  x: 91, y: 60, correctWordId: "el cascanueces" },
+      { number: 8,  x: 45, y: 75, correctWordId: "el regalo navideño" },
+      { number: 9,  x: 64, y: 35, correctWordId: "la bola de Navidad" },
+      { number: 10, x: 30, y: 10, correctWordId: "la tarjeta de Navidad" },
+      { number: 11, x: 10, y: 13, correctWordId: "la vela" },
+      { number: 12, x: 30, y: 34, correctWordId: "los calcetines" },
+      { number: 13, x: 74, y: 86, correctWordId: "el gato" }
     ];
 
     /* ========= SPIELVARIABLEN ========= */
@@ -175,10 +252,14 @@
     const wordListEl = document.getElementById("wordList");
     const feedbackEl = document.getElementById("feedback");
     const statusEl = document.getElementById("status");
+    const partyOverlay = document.getElementById("partyOverlay");
 
     let correctCount = 0;
     let draggingCard = null;
     let dragClone = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let partyStarted = false;
 
     /* ========= ZIELE ERZEUGEN ========= */
 
@@ -195,7 +276,7 @@
       });
     }
 
-    /* ========= WORTKÄRTCHEN ERZEUGEN ========= */
+    /* ========= WORTKÄRTCHEN ========= */
 
     function initWords() {
       words.forEach(w => {
@@ -216,12 +297,14 @@
 
       draggingCard = card;
 
-      // "Ghost"-Kopie erzeugen
+      const rect = card.getBoundingClientRect();
+      dragOffsetX = e.clientX - rect.left;
+      dragOffsetY = e.clientY - rect.top;
+
       dragClone = card.cloneNode(true);
       dragClone.style.position = "fixed";
-      dragClone.style.left = e.clientX + "px";
-      dragClone.style.top = e.clientY + "px";
-      dragClone.style.transform = "translate(-50%, -50%)";
+      dragClone.style.left = rect.left + "px";
+      dragClone.style.top = rect.top + "px";
       dragClone.style.opacity = "0.9";
       dragClone.style.zIndex = "9999";
       dragClone.style.pointerEvents = "none";
@@ -233,21 +316,36 @@
 
     function onPointerMove(e) {
       if (!dragClone) return;
-      dragClone.style.left = e.clientX + "px";
-      dragClone.style.top = e.clientY + "px";
+      dragClone.style.left = (e.clientX - dragOffsetX) + "px";
+      dragClone.style.top  = (e.clientY - dragOffsetY) + "px";
     }
 
-    /* ========= DRAG LOSLASSEN ========= */
+    /* ========= DRAG LOS ========= */
 
     function onPointerUp(e) {
       if (!draggingCard) return;
 
       if (dragClone) dragClone.remove();
 
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      const target = el ? el.closest(".target-number") : null;
+      const snapRadius = 60;
+      const targets = Array.from(document.querySelectorAll(".target-number"));
+      let chosenTarget = null;
+      let minDist = Infinity;
 
-      if (target) dropOnTarget(draggingCard, target);
+      targets.forEach(t => {
+        const r = t.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+        if (dist < minDist) {
+          minDist = dist;
+          chosenTarget = t;
+        }
+      });
+
+      if (chosenTarget && minDist <= snapRadius) {
+        dropOnTarget(draggingCard, chosenTarget);
+      }
 
       draggingCard = null;
       dragClone = null;
@@ -257,28 +355,21 @@
 
     function dropOnTarget(wordCard, target) {
       const correctId = target.dataset.correctWordId;
-      const droppedId = wordCard.dataset.wordId;
 
-      if (correctId !== droppedId) {
+      if (wordCard.dataset.wordId !== correctId) {
         feedbackEl.textContent = "No. Intenta otra vez.";
         feedbackEl.className = "feedback bad";
         return;
       }
 
-      /* ========== RICHTIG! Wort soll an der Zielposition stehen bleiben ========== */
-
       target.classList.add("correct");
       wordCard.classList.add("used");
 
-      // Wort an Zielposition anzeigen
       const placed = document.createElement("div");
       placed.className = "placed-word";
       placed.textContent = wordCard.textContent;
-
-      // Position über der Zahl
       placed.style.left = target.style.left;
       placed.style.top = target.style.top;
-
       imageContainer.appendChild(placed);
 
       feedbackEl.textContent = "¡Muy bien!";
@@ -288,6 +379,43 @@
       updateStatus();
     }
 
+    /* ========= PARTY-FUNKTION ========= */
+
+    function startParty() {
+      if (partyStarted) return;
+      partyStarted = true;
+
+      // Overlay anzeigen
+      partyOverlay.style.display = "flex";
+
+      // Konfetti erzeugen
+      const colors = ["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93", "#ffffff"];
+      const confettiCount = 150;
+
+      for (let i = 0; i < confettiCount; i++) {
+        const conf = document.createElement("div");
+        conf.className = "confetti";
+        const size = 6 + Math.random() * 6;
+        conf.style.width = size + "px";
+        conf.style.height = (size * 1.6) + "px";
+        conf.style.left = Math.random() * 100 + "vw";
+        conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        const duration = 3 + Math.random() * 2;
+        const delay = Math.random() * 1.5;
+        conf.style.animationDuration = duration + "s";
+        conf.style.animationDelay = delay + "s";
+        document.body.appendChild(conf);
+
+        // Konfetti nach Animation entfernen
+        setTimeout(() => conf.remove(), (duration + delay) * 1000 + 500);
+      }
+
+      // Overlay durch Klick schließen (optional)
+      partyOverlay.addEventListener("click", () => {
+        partyOverlay.style.display = "none";
+      });
+    }
+
     /* ========= STATUS ========= */
 
     function updateStatus() {
@@ -295,6 +423,7 @@
 
       if (correctCount === targetsConfig.length) {
         statusEl.innerHTML = `<span>¡Perfecto! Juego completo.</span>`;
+        startParty();
       }
     }
 
@@ -302,6 +431,7 @@
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerUp);
 
     initTargets();
     initWords();
