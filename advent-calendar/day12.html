@@ -5,16 +5,55 @@
   <title>Adventskalender Tag 12</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    /* =========================
+       HINTERGRUNDBILD
+       =========================
+       → Hier kannst du den Bildpfad ändern:
+       Ersetze 'dein-hintergrundbild.jpg' durch dein eigenes Bild.
+    */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Georgia", "Times New Roman", serif;
+      background-color: #e2f4f9; /* Fallback-Farbe, falls Bild nicht lädt */
+    }
+
+    body::before {
+      content: "";
+      position: fixed;      /* Bild bleibt stehen beim Scrollen */
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("bimmelbahn.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.45;        /* etwas durchsichtig, damit Text gut lesbar bleibt */
+      z-index: -1;          /* liegt hinter allem Inhalt */
+      pointer-events: none;
+    }
+
+    header, footer {
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .puzzle-container {
+      padding: 2rem 1rem 4rem 1rem;
+    }
+
     /* Kleiner Feinschliff, damit es wie eine Rätselkarte wirkt */
     .puzzle-card {
       max-width: 700px;
       margin: 0 auto;
       padding: 2rem;
-      background: #fffdf7;
+      background: rgba(255, 253, 247, 0.95);
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
       line-height: 1.5;
     }
+
     .puzzle-title {
       font-family: "Brush Script MT", "Pacifico", cursive;
       font-size: 2rem;
@@ -22,37 +61,43 @@
       margin-bottom: 1rem;
       color: #2f6532;
     }
+
     .puzzle-text {
-      font-family: "Georgia", "Times New Roman", serif;
       font-size: 1rem;
       color: #2b2b2b;
       margin-bottom: 0.6rem;
     }
+
     .puzzle-question {
       font-weight: bold;
       color: #1f6b3a;
       margin-top: 1rem;
     }
+
     .answer-area {
       margin-top: 1rem;
       text-align: center;
     }
+
     .answer-area input {
       padding: 0.4rem 0.6rem;
       font-size: 1rem;
       width: 80px;
       text-align: center;
     }
+
     .answer-area button {
       padding: 0.4rem 0.8rem;
       margin-left: 0.5rem;
       font-size: 1rem;
       cursor: pointer;
     }
+
     .letter-container {
       margin-top: 1.5rem;
       text-align: center;
     }
+
     .letter {
       display: inline-block;
       padding: 0.6rem 1rem;
@@ -62,6 +107,41 @@
       font-weight: bold;
       color: #1f6b3a;
       background: #f5fff7;
+    }
+
+    /* HINWEIS-BEREICH */
+    .hint-section {
+      margin-top: 1.5rem;
+      border-top: 1px dashed #7ca88a;
+      padding-top: 1rem;
+    }
+
+    .hint-section h3 {
+      margin-top: 0;
+      font-size: 1.1rem;
+      color: #28563a;
+      text-align: center;
+    }
+
+    .hint-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .hint-buttons button {
+      padding: 0.4rem 0.7rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .hint-text {
+      display: none;
+      font-size: 0.95rem;
+      color: #234130;
+      margin-top: 0.4rem;
     }
   </style>
 </head>
@@ -79,7 +159,7 @@
         sind durch zwei Bimmelbahnen miteinander verbunden.
       </p>
       <p class="puzzle-text">
-        Jede volle Stunde fährt an der Werkstatt eine Bahn los, 
+        Jede volle Stunde fährt an der Werkstatt eine Bahn los,
         die für den Weg zur Fabrik genau fünf Stunden benötigt.
       </p>
       <p class="puzzle-text">
@@ -99,6 +179,32 @@
 
       <div id="quizFeedback2" style="color:red; margin-top:10px; text-align:center;"></div>
 
+      <!-- HINWEISE -->
+      <div class="hint-section">
+        <h3>Brauchst du einen Hinweis?</h3>
+        <div class="hint-buttons">
+          <button type="button" onclick="toggleHint(1)">Hinweis&nbsp;1</button>
+          <button type="button" onclick="toggleHint(2)">Hinweis&nbsp;2</button>
+          <button type="button" onclick="toggleHint(3)">Hinweis&nbsp;3</button>
+        </div>
+
+        <div id="hint1" class="hint-text">
+          Stell dir vor, die Bimmelbahnen fahren schon den ganzen Tag im gleichen Rhythmus.
+          „Später Nachmittag“ heißt: Der Betrieb läuft längst im Gleichgewicht.
+        </div>
+        <div id="hint2" class="hint-text">
+          Wenn eine Bahn an der Werkstatt losfährt, sind bereits mehrere Bahnen von der
+          Fabrik aus auf dem Rückweg. Überlege: Wie viele Züge können in 7 Stunden (Fahrzeit zurück)
+          gestartet sein, wenn jede Stunde eine Bahn losfährt?
+        </div>
+        <div id="hint3" class="hint-text">
+          Die Bimmelbahn aus der Werkstatt trifft<br>
+          1. alle Züge, die schon unterwegs von der Fabrik zur Werkstatt sind, wenn sie startet, <strong>und</strong><br>
+          2. alle Züge, die in den 5 Stunden ihrer Fahrt noch an der Fabrik losfahren.<br>
+          Addiere diese beiden Anzahlen.
+        </div>
+      </div>
+
       <div id="letter-container" class="letter-container" style="display:none;">
         <p>Richtig! Dein Buchstabe für das Lösungswort ist:</p>
         <div class="letter" id="letter">R</div>
@@ -107,7 +213,6 @@
     </div>
   </main>
 
-  
   <script>
     function checkRiddle() {
       const input = document.getElementById('answerInput').value.trim();
@@ -127,6 +232,14 @@
       const container = document.getElementById('letter-container');
       document.getElementById('letter').textContent = letter;
       container.style.display = 'block';
+    }
+
+    // HINWEIS-TOGGLE
+    function toggleHint(nr) {
+      const el = document.getElementById('hint' + nr);
+      if (!el) return;
+      const isVisible = el.style.display === 'block';
+      el.style.display = isVisible ? 'none' : 'block';
     }
   </script>
 </body>
