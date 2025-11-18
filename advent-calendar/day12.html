@@ -19,19 +19,21 @@
     }
 
     body::before {
-      content: "";
-      position: fixed;      /* Bild bleibt stehen beim Scrollen */
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: url("assets/bimmelbahn.png");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      opacity: 0.45;        /* etwas durchsichtig, damit Text gut lesbar bleibt */
-      z-index: -1;          /* liegt hinter allem Inhalt */
-      pointer-events: none;
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("dein-hintergrundbild.jpg");
+  background-size: contain;         /* Bild vollständig zeigen */
+  background-position: center top;  /* Auf dem Handy schön zentriert */
+  background-repeat: no-repeat;
+  background-color: #e2f4f9;        /* dezenter Füllton für Ränder */
+  opacity: 0.45;
+  z-index: -1;
+}
+
     }
 
     header, footer {
