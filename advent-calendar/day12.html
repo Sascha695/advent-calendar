@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Adventskalender Tag 12</title>
   <link rel="stylesheet" href="style.css">
   <style>
@@ -19,21 +20,20 @@
     }
 
     body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("dein-hintergrundbild.jpg");
-  background-size: contain;         /* Bild vollständig zeigen */
-  background-position: center top;  /* Auf dem Handy schön zentriert */
-  background-repeat: no-repeat;
-  background-color: #e2f4f9;        /* dezenter Füllton für Ränder */
-  opacity: 0.45;
-  z-index: -1;
-}
-
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("assets/bimmelbahn.png");
+      background-size: contain;         /* Bild vollständig zeigen */
+      background-position: center top;  /* Auf dem Handy schön zentriert */
+      background-repeat: no-repeat;
+      background-color: #e2f4f9;        /* dezenter Füllton für Ränder */
+      opacity: 0.45;
+      z-index: -1;                      /* hinter allem Inhalt */
+      pointer-events: none;
     }
 
     header, footer {
@@ -41,16 +41,28 @@
       padding: 1rem 0;
     }
 
-    .puzzle-container {
-      padding: 600vh 1rem 4rem 1rem; /* 60% Bildschirmhöhe Abstand nach oben */
+    footer {
+      font-size: 0.85rem;
     }
 
-    /* Kleiner Feinschliff, damit es wie eine Rätselkarte wirkt */
+    /* Abstand nach oben, damit man zuerst das Bild sieht */
+    .puzzle-container {
+      padding: 100vh 1rem 4rem 1rem; /* auf kleinen Screens: eine ganze Bildschirmhöhe Abstand */
+    }
+
+    /* auf größeren Bildschirmen etwas weniger Abstand */
+    @media (min-width: 768px) {
+      .puzzle-container {
+        padding-top: 60vh;
+      }
+    }
+
+    /* Karte mit Rätsel */
     .puzzle-card {
       max-width: 700px;
       margin: 0 auto;
       padding: 2rem;
-      background: rgba(255, 253, 247, 0.7);
+      background: rgba(255, 253, 247, 0.9);
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
       line-height: 1.5;
@@ -214,6 +226,10 @@
       </div>
     </div>
   </main>
+
+  <footer>
+    <!-- Optional: dein Footer-Text -->
+  </footer>
 
   <script>
     function checkRiddle() {
